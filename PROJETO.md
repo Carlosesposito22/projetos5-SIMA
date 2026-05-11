@@ -112,29 +112,30 @@ Todas tomadas sob a pergunta-filtro: **"O que é estritamente necessário para v
 
 ---
 
-## 8. Backlog — Histórias do Usuário
+## 8. Backlog — Histórias do Usuário (10 USs)
 
-**Cidadão / Morador**
-1. Cadastro de usuário (nome, email, senha; validação de email; senha mínima)
-2. Login (email + senha; mensagem de erro se inválido)
-3. Logout
-4. Criar alerta de alagamento (localização manual ou GPS, nível baixo/médio/alto, descrição opcional)
-5. Visualizar alertas (lista + mapa, ordenação por proximidade ou tempo)
-6. Atualizar status do alerta ("Ainda está alagado" / "Já normalizou")
-7. Confirmar alerta existente (crowdsourcing — contador de confirmações)
-8. Reportar alerta falso (contador de denúncias, mitiga fake alerts)
-9. Receber alertas próximos (notificação app + email + WhatsApp; SMS a verificar)
-10. Mapa de risco (marcadores diferenciados por cor/nível)
-11. Lista de áreas mais afetadas (ranking por quantidade de alertas, período 24h/7d)
+O backlog do MVP é composto por **exatamente 10 histórias do usuário**, distribuídas em três personas. Esta é a fonte da verdade do escopo — qualquer feature fora dessa lista não pertence ao MVP.
 
-**Defesa Civil / Gestor**
-- Painel com status de todos os pontos monitorados
-- Gatilho automático em nível crítico (sem depender de monitoramento manual)
-- Filtro por bairro/região para priorizar atendimento
+**👤 Cidadão / Usuário Final**
 
-**Administrador**
-- Cadastro de sensor IoT (preparado para fase futura — não entra no MVP)
-- Autenticação segura (login ou via WhatsApp)
+- **US01 — Ver alertas no mapa:** como cidadão de Recife, quero visualizar em um mapa interativo os pontos de alagamento em tempo real, para que eu possa planejar minha rota antes de sair de casa.
+- **US02 — Receber notificação de alerta:** como morador de uma área de risco, quero receber uma notificação imediata quando um alagamento for detectado no meu bairro, para que eu possa tomar uma ação preventiva com antecedência.
+- **US03 — Ver nível de severidade:** como pedestre, quero saber o nível de criticidade de cada ponto (Atenção / Alerta / Crítico), para que eu consiga avaliar se é seguro passar por aquela via.
+- **US04 — Registrar um relato:** como usuário do aplicativo, quero reportar manualmente um alagamento que estou presenciando, para que outras pessoas sejam avisadas mais rapidamente.
+- **US05 — Acessar pelo WhatsApp:** como cidadão que não tem o app instalado, quero receber alertas pelo WhatsApp, para que eu seja informado mesmo sem precisar baixar nada.
+
+**🚨 Agente da Defesa Civil / Gestor Urbano**
+
+- **US06 — Monitorar todos os pontos no dashboard:** como operador da Defesa Civil, quero visualizar um painel com o status de todos os pontos monitorados de Recife, para que eu possa coordenar as equipes de campo com agilidade.
+- **US07 — Receber gatilho automático de nível crítico:** como gestor de emergências, quero que o sistema dispare um alerta automático quando o nível da água atingir o threshold crítico, para que a resposta operacional seja iniciada sem depender de monitoramento manual constante.
+- **US08 — Filtrar alertas por bairro:** como operador, quero filtrar os alertas por bairro ou região, para que eu consiga priorizar as áreas com maior concentração de ocorrências.
+
+**🔧 Administrador do Sistema**
+
+- **US09 — Cadastrar novo sensor IoT:** como administrador, quero registrar um novo sensor no sistema informando sua localização e tipo, para que ele comece a enviar dados e aparecer no mapa.
+- **US10 — Autenticar no sistema:** como administrador ou operador, quero fazer login com usuário e senha (ou via WhatsApp), para que o acesso ao painel seja seguro e controlado.
+
+> O arquivo histórico [`context/Backlog.md`](context/Backlog.md) contém o backlog bruto da fase de ideação (11 itens, sem agrupamento por persona) e fica preservado como artefato. O escopo vigente é o desta seção.
 
 ---
 

@@ -89,10 +89,11 @@ projetos5-SIMA/
 │   │   ├── urls.py
 │   │   └── wsgi.py
 │   ├── apps/                       # apps Django (modular)
-│   │   ├── users/                  # cadastro, login, perfil
-│   │   ├── relatos/                # crowdsourcing (US04, US05, US07, US08)
-│   │   ├── alertas/                # disparo + histórico de alertas
+│   │   ├── users/                  # autenticação e perfil (US10)
+│   │   ├── relatos/                # crowdsourcing — relato manual (US04)
+│   │   ├── alertas/                # mapa, notificação, gatilho, filtros (US01–US03, US06–US08)
 │   │   ├── areas_risco/            # bairros, polígonos, thresholds
+│   │   ├── sensores/               # cadastro de sensor IoT (US09)
 │   │   └── clima/                  # integração OpenWeather/Tomorrow/APAC
 │   ├── services/                   # camada de serviço
 │   │   ├── whatsapp_cloud.py       # cliente WhatsApp Cloud API
@@ -137,7 +138,7 @@ users (
   created_at
 )
 
--- Relatos de alagamento (crowdsourcing)
+-- Relatos de alagamento (crowdsourcing — US04)
 relatos (
   id PK,
   user_id FK,
@@ -145,11 +146,19 @@ relatos (
   bairro,
   nivel,              -- 'baixo' | 'medio' | 'alto'
   descricao,
-  status,             -- 'ativo' | 'normalizado'
-  confirmacoes INT,   -- contador (US07)
-  denuncias INT,      -- contador de fake (US08)
-  created_at,
-  updated_at
+  created_at
+)
+
+-- Sensores IoT cadastrados pelo administrador (US09)
+sensores (
+  id PK,
+  identificador UNIQUE,  -- código do equipamento
+  tipo,                  -- 'nivel_agua' | 'pluviometro' | 'camera' | ...
+  bairro,
+  lat, lng,
+  status,                -- 'ativo' | 'inativo' | 'manutencao'
+  cadastrado_por FK,     -- users.id (admin)
+  cadastrado_em
 )
 
 -- Alertas disparados pelo sistema
@@ -229,7 +238,7 @@ A trilha do 5º CC exige entregáveis específicos que devem viver na pasta `ml/
    - `DJANGO_SECRET_KEY=`
 7. **Configurar WhatsApp Cloud API:** criar app no Meta for Developers → adicionar produto WhatsApp → cadastrar número de teste → gerar token → testar envio com `curl` antes de codar o cliente.
 8. **Schema do Postgres:** rodar primeira migration com os models do schema da seção 4.
-9. **Sprint 1 (sugestão):** US01 (cadastro), US02 (login), US04 (criar relato), US05 (visualizar lista). Ainda sem mapa, sem ML, sem WhatsApp — só CRUD via DRF + telas React básicas pra validar o fluxo.
+9. **Sprint 1 (sugestão):** US10 (autenticação) + US04 (registrar relato) + US01 (ver alertas no mapa) + US03 (níveis de severidade no marcador). Ainda sem ML, sem WhatsApp, sem gatilho automático — só CRUD via DRF + mapa React básico pra validar o fluxo ponta a ponta.
 
 ---
 
