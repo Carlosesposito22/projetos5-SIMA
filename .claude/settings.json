@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(venv/Scripts/python.exe -c \"import django; print\\('django', django.get_version\\(\\)\\)\")",
+      "Bash(venv/Scripts/python.exe -c \"import rest_framework; print\\('drf ok'\\)\")",
+      "Bash(venv/Scripts/python.exe -c \"import rest_framework_simplejwt; print\\('simplejwt ok'\\)\")",
+      "Bash(venv/Scripts/python.exe -m pip install \"djangorestframework-simplejwt[crypto]>=5.3\")",
+      "Bash(../venv/Scripts/python.exe manage.py makemigrations users)"
+    ]
+  }
+}

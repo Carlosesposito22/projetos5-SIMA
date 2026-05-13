@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Venv
+venv/
+.venv/
+env/
+
+# Django local
+db.sqlite3
+db.sqlite3-journal
+staticfiles/
+media/
+*.log
+
+# Git / IDE / SO
+.git/
+.gitignore
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets (nunca dentro da imagem; vêm via env_file no compose)
+.env
+.env.*
+!.env.example

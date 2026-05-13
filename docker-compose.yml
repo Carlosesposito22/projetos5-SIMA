@@ -17,5 +17,41 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build:
+      context: ./backend
+    container_name: sima-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Sobrescreve DATABASE_URL pra resolver o Postgres pelo hostname do compose.
+      DATABASE_URL: postgres://${POSTGRES_USER:-sima}:${POSTGRES_PASSWORD:-sima}@postgres:5432/${POSTGRES_DB:-sima}
+    ports:
+      - "8000:8000"
+    volumes:
+      # Bind do código pra refletir mudanças sem rebuild (runserver tem auto-reload).
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: sima-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8000}
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      # Volume anônimo pra que o node_modules do container não seja sobrescrito
+      # pelo bind do host (que pode estar vazio ou ter binários incompatíveis).
+      - /app/node_modules
+    depends_on:
+      - backend
+
 volumes:
   sima_pgdata:
