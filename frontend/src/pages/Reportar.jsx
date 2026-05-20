@@ -10,6 +10,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { NivelSelector } from '../components/NivelSelector'
+import { BuscaCEP } from '../components/BuscaCEP'
 import { relatos } from '../lib/relatos'
 
 const MAX_DESCRICAO = 500
@@ -31,6 +32,15 @@ export function Reportar() {
 
   const [obtendoLocalizacao, setObtendoLocalizacao] = useState(false)
   const [avisoLocalizacao, setAvisoLocalizacao] = useState(null)
+  const [modoLocalizacao, setModoLocalizacao] = useState('gps')
+
+  const handleLocalizadoPorCEP = ({ lat: latCEP, lng: lngCEP, bairro: bairroCEP }) => {
+    setLat(latCEP.toFixed(6))
+    setLng(lngCEP.toFixed(6))
+    if (bairroCEP && !bairro) {
+      setBairro(bairroCEP)
+    }
+  }
 
   const handleUsarLocalizacao = () => {
     setAvisoLocalizacao(null)
@@ -139,21 +149,71 @@ export function Reportar() {
               <legend className="block text-sm font-medium text-slate-700 mb-2">
                 Localização <span className="text-red-600">*</span>
               </legend>
-              <button
-                type="button"
-                onClick={handleUsarLocalizacao}
-                disabled={obtendoLocalizacao}
-                className="mb-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 border border-blue-200 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
-              >
-                {obtendoLocalizacao
-                  ? 'Obtendo localização...'
-                  : '📍 Usar minha localização'}
-              </button>
 
-              {avisoLocalizacao && (
-                <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
-                  {avisoLocalizacao}
-                </p>
+              <div
+                className="inline-flex p-1 bg-slate-100 rounded-lg mb-3"
+                role="tablist"
+              >
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={modoLocalizacao === 'gps'}
+                  onClick={() => setModoLocalizacao('gps')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                    modoLocalizacao === 'gps'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  📍 GPS
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={modoLocalizacao === 'cep'}
+                  onClick={() => setModoLocalizacao('cep')}
+                  className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                    modoLocalizacao === 'cep'
+                      ? 'bg-white text-slate-900 shadow-sm'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  🏠 CEP
+                </button>
+              </div>
+
+              {modoLocalizacao === 'gps' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleUsarLocalizacao}
+                    disabled={obtendoLocalizacao}
+                    className="mb-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 border border-blue-200 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
+                  >
+                    {obtendoLocalizacao
+                      ? 'Obtendo localização...'
+                      : '📍 Usar minha localização'}
+                  </button>
+
+                  {avisoLocalizacao && (
+                    <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+                      {avisoLocalizacao}{' '}
+                      <button
+                        type="button"
+                        onClick={() => setModoLocalizacao('cep')}
+                        className="underline font-medium"
+                      >
+                        Buscar por CEP
+                      </button>
+                    </p>
+                  )}
+                </>
+              )}
+
+              {modoLocalizacao === 'cep' && (
+                <div className="mb-3">
+                  <BuscaCEP onLocalizado={handleLocalizadoPorCEP} />
+                </div>
               )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
