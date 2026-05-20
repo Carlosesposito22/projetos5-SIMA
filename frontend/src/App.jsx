@@ -4,6 +4,7 @@ import { ProtectedRoute, PublicOnly } from './components/ProtectedRoute'
 import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Home } from './pages/Home'
+import { Reportar } from './pages/Reportar'
 
 function App() {
   return (
@@ -31,6 +32,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reportar"
+            element={
+              <ProtectedRoute>
+                <Reportar />
               </ProtectedRoute>
             }
           />
