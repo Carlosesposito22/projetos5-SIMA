@@ -1,9 +1,9 @@
 /**
  * Página de registro de relato de alagamento (US04).
  *
- * Fluxo: usuário autenticado abre a página, captura a localização (GPS do
- * navegador ou digita manualmente), escolhe o nível e envia. Em sucesso,
- * volta pra Home depois de uma confirmação curta.
+ * Localização vem do GPS do navegador ou do CEP — o usuário nunca digita
+ * coordenadas. Em ambos os caminhos a tela mostra o endereço resolvido
+ * por reverse geocoding (Nominatim) pra confirmar o que vai ser salvo.
  */
 
 import { useState } from 'react'
@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { NivelSelector } from '../components/NivelSelector'
 import { BuscaCEP } from '../components/BuscaCEP'
 import { relatos } from '../lib/relatos'
+import { reverseGeocode } from '../lib/geocoder'
 
 const MAX_DESCRICAO = 500
 
@@ -19,8 +20,10 @@ export function Reportar() {
   const { user } = useAuth()
   const navigate = useNavigate()
 
-  const [lat, setLat] = useState('')
-  const [lng, setLng] = useState('')
+  // Localização canônica do relato — preenchida pelo GPS ou pelo CEP.
+  // Lat/lng nunca aparecem em input pro usuário; só vão pro backend.
+  const [localizacao, setLocalizacao] = useState(null) // { lat, lng, endereco, fonte }
+
   const [bairro, setBairro] = useState(user?.bairro || '')
   const [nivel, setNivel] = useState('')
   const [descricao, setDescricao] = useState('')
@@ -30,50 +33,72 @@ export function Reportar() {
   const [submetendo, setSubmetendo] = useState(false)
   const [sucesso, setSucesso] = useState(false)
 
-  const [obtendoLocalizacao, setObtendoLocalizacao] = useState(false)
-  const [avisoLocalizacao, setAvisoLocalizacao] = useState(null)
+  const [obtendoGPS, setObtendoGPS] = useState(false)
+  const [avisoGPS, setAvisoGPS] = useState(null)
   const [modoLocalizacao, setModoLocalizacao] = useState('gps')
 
-  const handleLocalizadoPorCEP = ({ lat: latCEP, lng: lngCEP, bairro: bairroCEP }) => {
-    setLat(latCEP.toFixed(6))
-    setLng(lngCEP.toFixed(6))
-    if (bairroCEP && !bairro) {
-      setBairro(bairroCEP)
+  const aplicarLocalizacao = ({ lat, lng, endereco, bairroSugerido, fonte }) => {
+    setLocalizacao({ lat, lng, endereco, fonte })
+    if (bairroSugerido && !bairro) {
+      setBairro(bairroSugerido)
     }
   }
 
-  const handleUsarLocalizacao = () => {
-    setAvisoLocalizacao(null)
+  const handleLocalizadoPorCEP = ({ lat, lng, bairro: bairroCEP, displayName }) => {
+    aplicarLocalizacao({
+      lat,
+      lng,
+      endereco: displayName,
+      bairroSugerido: bairroCEP,
+      fonte: 'cep',
+    })
+  }
+
+  const handleUsarGPS = () => {
+    setAvisoGPS(null)
     if (!('geolocation' in navigator)) {
-      setAvisoLocalizacao(
-        'Seu navegador não suporta geolocalização. Preencha latitude e longitude manualmente.'
-      )
+      setAvisoGPS('Seu navegador não suporta geolocalização.')
       return
     }
-    setObtendoLocalizacao(true)
+    setObtendoGPS(true)
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(pos.coords.latitude.toFixed(6))
-        setLng(pos.coords.longitude.toFixed(6))
-        setObtendoLocalizacao(false)
+      async (pos) => {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        try {
+          const { displayName, bairro: bairroReverso } = await reverseGeocode(lat, lng)
+          aplicarLocalizacao({
+            lat,
+            lng,
+            endereco: displayName,
+            bairroSugerido: bairroReverso,
+            fonte: 'gps',
+          })
+        } catch {
+          // Reverse falhou — ainda assim temos lat/lng válidos.
+          aplicarLocalizacao({
+            lat,
+            lng,
+            endereco: 'Localização capturada pelo GPS',
+            fonte: 'gps',
+          })
+        } finally {
+          setObtendoGPS(false)
+        }
       },
       (err) => {
-        setObtendoLocalizacao(false)
+        setObtendoGPS(false)
         if (err.code === err.PERMISSION_DENIED) {
-          setAvisoLocalizacao(
-            'Permissão de localização negada. Você pode digitar latitude e longitude manualmente.'
-          )
+          setAvisoGPS('Permissão de localização negada.')
         } else {
-          setAvisoLocalizacao(
-            'Não foi possível obter sua localização agora. Tente de novo ou preencha manualmente.'
-          )
+          setAvisoGPS('Não foi possível obter sua localização agora.')
         }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
   }
 
-  const formValido = lat !== '' && lng !== '' && nivel !== ''
+  const formValido = localizacao !== null && nivel !== ''
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -82,8 +107,8 @@ export function Reportar() {
     setSubmetendo(true)
     try {
       await relatos.criar({
-        lat,
-        lng,
+        lat: localizacao.lat.toFixed(6),
+        lng: localizacao.lng.toFixed(6),
         bairro: bairro.trim(),
         nivel,
         descricao: descricao.trim(),
@@ -183,21 +208,21 @@ export function Reportar() {
               </div>
 
               {modoLocalizacao === 'gps' && (
-                <>
+                <div className="space-y-3">
                   <button
                     type="button"
-                    onClick={handleUsarLocalizacao}
-                    disabled={obtendoLocalizacao}
-                    className="mb-3 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 border border-blue-200 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
+                    onClick={handleUsarGPS}
+                    disabled={obtendoGPS}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 border border-blue-200 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm font-medium"
                   >
-                    {obtendoLocalizacao
+                    {obtendoGPS
                       ? 'Obtendo localização...'
                       : '📍 Usar minha localização'}
                   </button>
 
-                  {avisoLocalizacao && (
-                    <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
-                      {avisoLocalizacao}{' '}
+                  {avisoGPS && (
+                    <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      {avisoGPS}{' '}
                       <button
                         type="button"
                         onClick={() => setModoLocalizacao('cep')}
@@ -207,59 +232,37 @@ export function Reportar() {
                       </button>
                     </p>
                   )}
-                </>
+                </div>
               )}
 
               {modoLocalizacao === 'cep' && (
-                <div className="mb-3">
-                  <BuscaCEP onLocalizado={handleLocalizadoPorCEP} />
+                <BuscaCEP onLocalizado={handleLocalizadoPorCEP} />
+              )}
+
+              {localizacao && (
+                <div className="mt-3 text-sm bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 flex items-start gap-2">
+                  <span className="text-emerald-700 font-semibold">✓</span>
+                  <div className="flex-1">
+                    <div className="text-emerald-900 font-medium">
+                      Localização encontrada
+                    </div>
+                    <div className="text-emerald-800">{localizacao.endereco}</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLocalizacao(null)}
+                    className="text-xs text-emerald-700 hover:text-emerald-900 underline shrink-0"
+                  >
+                    Trocar
+                  </button>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label
-                    htmlFor="lat"
-                    className="block text-xs font-medium text-slate-600 mb-1"
-                  >
-                    Latitude
-                  </label>
-                  <input
-                    id="lat"
-                    type="text"
-                    inputMode="decimal"
-                    value={lat}
-                    onChange={(e) => setLat(e.target.value)}
-                    required
-                    placeholder="-8.063169"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {erros.lat && (
-                    <p className="text-xs text-red-600 mt-1">{erros.lat}</p>
-                  )}
-                </div>
-                <div>
-                  <label
-                    htmlFor="lng"
-                    className="block text-xs font-medium text-slate-600 mb-1"
-                  >
-                    Longitude
-                  </label>
-                  <input
-                    id="lng"
-                    type="text"
-                    inputMode="decimal"
-                    value={lng}
-                    onChange={(e) => setLng(e.target.value)}
-                    required
-                    placeholder="-34.871139"
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {erros.lng && (
-                    <p className="text-xs text-red-600 mt-1">{erros.lng}</p>
-                  )}
-                </div>
-              </div>
+              {(erros.lat || erros.lng) && (
+                <p className="text-xs text-red-600 mt-2">
+                  {erros.lat || erros.lng}
+                </p>
+              )}
             </fieldset>
 
             <div>

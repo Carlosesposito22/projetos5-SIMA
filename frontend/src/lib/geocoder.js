@@ -11,6 +11,7 @@
 
 const VIACEP_URL = 'https://viacep.com.br/ws'
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search'
+const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse'
 
 export function limparCEP(cep) {
   return (cep || '').replace(/\D/g, '')
@@ -104,5 +105,37 @@ export async function geocodificarEndereco({ logradouro, numero, bairro, cidade,
     lat: parseFloat(primeiro.lat),
     lng: parseFloat(primeiro.lon),
     displayName: primeiro.display_name,
+  }
+}
+
+/**
+ * Reverse geocoding: lat/lng → endereço legível (Nominatim).
+ *
+ * Usado pra dar feedback humano quando o GPS resolve a localização.
+ * Falha aqui não é fatal — o caller deve cair num fallback genérico
+ * ("Localização capturada via GPS").
+ */
+export async function reverseGeocode(lat, lng) {
+  const url = `${NOMINATIM_REVERSE_URL}?lat=${lat}&lon=${lng}&format=json&zoom=18`
+
+  let response
+  try {
+    response = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } })
+  } catch (err) {
+    throw Object.assign(new Error('Falha de rede no reverse geocode.'), { code: 'rede', cause: err })
+  }
+
+  if (!response.ok) {
+    throw Object.assign(new Error('Reverse geocoder retornou erro.'), { code: 'rede' })
+  }
+
+  const data = await response.json()
+  if (!data.display_name) {
+    throw Object.assign(new Error('Endereço não localizado.'), { code: 'sem_resultado' })
+  }
+
+  return {
+    displayName: data.display_name,
+    bairro: data.address?.suburb || data.address?.neighbourhood || '',
   }
 }

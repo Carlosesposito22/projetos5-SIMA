@@ -29,7 +29,6 @@ export function BuscaCEP({ onLocalizado }) {
   const [numero, setNumero] = useState('')
   const [buscando, setBuscando] = useState(false)
   const [erro, setErro] = useState(null)
-  const [endereco, setEndereco] = useState(null)
 
   const handleCepChange = (e) => {
     setCep(formatarCEP(e.target.value))
@@ -39,7 +38,6 @@ export function BuscaCEP({ onLocalizado }) {
   const handleBuscar = async (e) => {
     e.preventDefault()
     setErro(null)
-    setEndereco(null)
     setBuscando(true)
     try {
       const enderecoCEP = await buscarCEP(cep)
@@ -47,7 +45,6 @@ export function BuscaCEP({ onLocalizado }) {
         ...enderecoCEP,
         numero: numero.trim(),
       })
-      setEndereco({ ...enderecoCEP, ...coords })
       onLocalizado({
         lat: coords.lat,
         lng: coords.lng,
@@ -112,13 +109,6 @@ export function BuscaCEP({ onLocalizado }) {
       {erro && (
         <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {erro}
-        </p>
-      )}
-
-      {endereco && (
-        <p className="text-sm text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-          <span className="font-medium">✓ Localização encontrada:</span>{' '}
-          {endereco.displayName}
         </p>
       )}
     </div>
