@@ -3,10 +3,20 @@ from datetime import timedelta
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now
 from rest_framework import generics, permissions, status
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from .models import Relato
 from .serializers import RelatoCreateSerializer, RelatoSerializer
+
+
+class EDonoOuReadOnly(permissions.BasePermission):
+    """Permite edição/exclusão apenas ao criador do relato."""
+
+    def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return obj.user == request.user
 
 
 class RelatoListCreateView(generics.ListCreateAPIView):
@@ -19,6 +29,7 @@ class RelatoListCreateView(generics.ListCreateAPIView):
       - ``desde``: ISO 8601 (ex: ``2026-05-20T10:00:00Z``) — apenas relatos
         criados a partir desse instante.
       - ``ultimas_horas``: inteiro — atalho para ``desde`` relativo (ex: ``6``).
+      - ``meus``: ``true`` — retorna apenas relatos do usuário autenticado.
     """
 
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
@@ -53,6 +64,9 @@ class RelatoListCreateView(generics.ListCreateAPIView):
             except ValueError:
                 pass
 
+        if params.get('meus') == 'true' and self.request.user.is_authenticated:
+            qs = qs.filter(user=self.request.user)
+
         return qs
 
     def create(self, request, *args, **kwargs):
@@ -62,9 +76,29 @@ class RelatoListCreateView(generics.ListCreateAPIView):
         return Response(RelatoSerializer(relato).data, status=status.HTTP_201_CREATED)
 
 
-class RelatoDetailView(generics.RetrieveAPIView):
-    """GET /api/relatos/<id>/ — detalhe de um relato. Imutável no MVP."""
+class RelatoDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """GET    /api/relatos/<id>/ — detalhe de um relato.
+    PATCH  /api/relatos/<id>/ — edita nivel/descricao (somente o dono).
+    DELETE /api/relatos/<id>/ — remove o relato (somente o dono).
+    """
 
-    queryset = Relato.objects.select_related('user').all()
-    serializer_class = RelatoSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    queryset = Relato.objects.select_related('user', 'bairro').all()
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, EDonoOuReadOnly]
+
+    def get_serializer_class(self):
+        if self.request.method in ('PUT', 'PATCH'):
+            return RelatoCreateSerializer
+        return RelatoSerializer
+
+    def update(self, request, *args, **kwargs):
+        kwargs['partial'] = True  # sempre PATCH semântico
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        relato = serializer.save()
+        return Response(RelatoSerializer(relato).data)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

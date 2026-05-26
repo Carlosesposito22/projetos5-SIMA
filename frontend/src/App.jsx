@@ -5,6 +5,7 @@ import { Login } from './pages/Login'
 import { Register } from './pages/Register'
 import { Mapa } from './pages/Mapa'
 import { Reportar } from './pages/Reportar'
+import { Alertas } from './pages/Alertas'
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/alertas" element={<ProtectedRoute><Alertas /></ProtectedRoute>}/>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
