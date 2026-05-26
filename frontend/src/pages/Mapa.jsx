@@ -20,6 +20,8 @@ import { LegendaNiveis } from '../components/LegendaNiveis'
 import { MapaRecife } from '../components/MapaRecife'
 import { MenuPerfil } from '../components/MenuPerfil'
 import { relatos as relatosService } from '../lib/relatos'
+// DEMO-MODE — remover antes de subir em produção (ver lib/demoMode.jsx)
+import { BannerDemo, useDemoMode } from '../lib/demoMode'
 
 const JANELA_HORAS = 6
 const INTERVALO_POLLING_MS = 30_000
@@ -58,7 +60,12 @@ export function Mapa() {
     }
   }, [])
 
-  const semRelatos = !carregandoInicial && relatos.length === 0
+  // DEMO-MODE — mistura relatos falsos quando o modo demo está ativo
+  const { ativo: demoAtivo, relatosFalsos } = useDemoMode()
+  const relatosExibidos = demoAtivo ? [...relatos, ...relatosFalsos] : relatos
+  // FIM DEMO-MODE
+
+  const semRelatos = !carregandoInicial && relatosExibidos.length === 0
 
   return (
     <div className="h-screen flex flex-col bg-slate-50">
@@ -72,9 +79,13 @@ export function Mapa() {
       </header>
 
       <main className="flex-1 relative">
-        <MapaRecife relatos={relatos} />
+        <MapaRecife relatos={relatosExibidos} />
 
         <LegendaNiveis />
+
+        {/* DEMO-MODE */}
+        <BannerDemo ativo={demoAtivo} />
+        {/* FIM DEMO-MODE */}
 
         {carregandoInicial && (
           <div
