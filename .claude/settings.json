@@ -10,7 +10,8 @@
       "Bash(curl -sL -o c:/Users/Carlos/Desktop/Faculdade/projetos5-SIMA/frontend/public/geo/bairros_recife.geojson https://raw.githubusercontent.com/zps-commits/Heat-Carbon/main/data/bairros_recife.geojson)",
       "Bash(python -c \"import json; d = json.load\\(open\\(r'c:/Users/Carlos/Desktop/Faculdade/projetos5-SIMA/frontend/public/geo/bairros_recife.geojson', encoding='utf-8'\\)\\); print\\('type:', d.get\\('type'\\)\\); print\\('features:', len\\(d.get\\('features', []\\)\\)\\); f = d['features'][0]; print\\('first feature props keys:', list\\(f.get\\('properties', {}\\).keys\\(\\)\\)\\); print\\('first feature props sample:', f.get\\('properties'\\)\\); print\\('first geom type:', f.get\\('geometry', {}\\).get\\('type'\\)\\)\")",
       "Bash(npm install *)",
-      "PowerShell(docker exec sima-frontend npm install leaflet react-leaflet 2>&1)"
+      "PowerShell(docker exec sima-frontend npm install leaflet react-leaflet 2>&1)",
+      "PowerShell(docker exec sima-frontend npm install leaflet.heat 2>&1)"
     ]
   }
 }

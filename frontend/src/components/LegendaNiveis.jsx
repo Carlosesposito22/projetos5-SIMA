@@ -1,37 +1,39 @@
 /**
- * Legenda flutuante com as cores dos níveis de alagamento.
- * Renderizada fora do MapContainer — fica posicionada absoluta sobre o mapa.
+ * Legenda flutuante do heatmap — gradiente verde→âmbar→vermelho.
+ *
+ * As cores e pontos de parada acompanham `OPCOES_HEAT.gradient` em
+ * `HeatmapRelatos.jsx`; se um mudar, o outro precisa acompanhar.
  */
-
-const ITENS = [
-  { cor: '#10b981', rotulo: 'Baixo', descricao: 'Poças, meio-fio' },
-  { cor: '#f59e0b', rotulo: 'Médio', descricao: 'Cobre a rua' },
-  { cor: '#dc2626', rotulo: 'Alto', descricao: 'Intransitável' },
-]
 
 export function LegendaNiveis() {
   return (
     <div
-      className="absolute bottom-4 left-4 z-[1000] bg-white/95 backdrop-blur rounded-xl border border-slate-200 shadow-sm p-3 max-w-[220px]"
+      className="absolute bottom-4 left-4 z-[1000] bg-white/95 backdrop-blur rounded-xl border border-slate-200 shadow-sm p-3 w-56"
       role="region"
-      aria-label="Legenda dos níveis de alagamento"
+      aria-label="Legenda do mapa de calor"
     >
       <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
-        Nível do alagamento
+        Intensidade
       </div>
-      <ul className="space-y-1.5">
-        {ITENS.map((item) => (
-          <li key={item.rotulo} className="flex items-center gap-2 text-sm">
-            <span
-              className="inline-block w-3 h-3 rounded-full border-2 border-white shadow"
-              style={{ backgroundColor: item.cor }}
-              aria-hidden="true"
-            />
-            <span className="text-slate-800 font-medium">{item.rotulo}</span>
-            <span className="text-slate-500 text-xs">— {item.descricao}</span>
-          </li>
-        ))}
-      </ul>
+
+      <div
+        className="h-3 rounded-full mb-1.5"
+        style={{
+          background:
+            'linear-gradient(to right, #10b981 0%, #f59e0b 50%, #dc2626 100%)',
+        }}
+        aria-hidden="true"
+      />
+
+      <div className="flex justify-between text-xs text-slate-600">
+        <span>Baixa</span>
+        <span>Média</span>
+        <span>Alta</span>
+      </div>
+
+      <p className="text-[11px] text-slate-500 mt-2 leading-snug">
+        Áreas mais quentes concentram mais relatos ou relatos de nível alto.
+      </p>
     </div>
   )
 }

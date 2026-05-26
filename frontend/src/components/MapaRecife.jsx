@@ -1,17 +1,17 @@
 /**
  * Mapa interativo de Recife (US01).
  *
- * Camadas:
- *  1. Tiles OpenStreetMap.
+ * Camadas (de baixo pra cima):
+ *  1. Tiles CartoDB Voyager (basemap limpo, sem POIs).
  *  2. GeoJSON dos bairros (contorno apenas — sem fill).
- *  3. Marcadores dos relatos das últimas 6h.
- *
- * O bounding box e zoom inicial cobrem a área urbana de Recife.
+ *  3. Heatmap dos relatos das últimas 6h (visualização de intensidade).
+ *  4. Marcadores clicáveis sobre o heatmap (popup com detalhe do relato).
  */
 
 import { GeoJSON, MapContainer, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
+import { HeatmapRelatos } from './HeatmapRelatos'
 import { MarcadorRelato } from './MarcadorRelato'
 import { useBairrosGeoJSON } from '../lib/bairrosGeo'
 
@@ -47,8 +47,10 @@ export function MapaRecife({ relatos }) {
       zoomControl={true}
     >
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        subdomains="abcd"
+        maxZoom={19}
       />
 
       {geojson && (
@@ -58,6 +60,8 @@ export function MapaRecife({ relatos }) {
           // Sem onEachFeature: contorno é decorativo no MVP.
         />
       )}
+
+      <HeatmapRelatos relatos={relatos} />
 
       {relatos.map((relato) => (
         <MarcadorRelato key={relato.id} relato={relato} />

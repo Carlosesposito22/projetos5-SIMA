@@ -1,16 +1,17 @@
 /**
- * Marcador de um relato de alagamento no mapa (US01).
+ * Marcador clicável de um relato — fica por cima do heatmap.
  *
- * Usamos CircleMarker (px fixos, independente do zoom) em vez de Marker
- * com ícone — mais leve e sem dependência de assets externos.
+ * Raio pequeno (6px) com borda branca pra destacar contra o gradiente.
+ * O heatmap dá o impacto visual; o marcador entrega a interatividade
+ * (popup com nível, bairro, autor, horário, descrição).
  */
 
 import { CircleMarker, Popup } from 'react-leaflet'
 
 const CORES = {
-  baixo: '#10b981', // emerald-500
-  medio: '#f59e0b', // amber-500
-  alto: '#dc2626', // red-600
+  baixo: '#10b981',
+  medio: '#f59e0b',
+  alto: '#dc2626',
 }
 
 const ROTULOS = {
@@ -20,16 +21,12 @@ const ROTULOS = {
 }
 
 function formatarTempoRelativo(timestamp) {
-  const agora = new Date()
-  const data = new Date(timestamp)
-  const diffMs = agora - data
-  const diffMin = Math.floor(diffMs / 60_000)
+  const diffMin = Math.floor((Date.now() - new Date(timestamp)) / 60_000)
   if (diffMin < 1) return 'agora mesmo'
   if (diffMin < 60) return `há ${diffMin} min`
   const diffH = Math.floor(diffMin / 60)
   if (diffH < 24) return `há ${diffH} h`
-  const diffD = Math.floor(diffH / 24)
-  return `há ${diffD} d`
+  return `há ${Math.floor(diffH / 24)} d`
 }
 
 export function MarcadorRelato({ relato }) {
@@ -41,12 +38,12 @@ export function MarcadorRelato({ relato }) {
   return (
     <CircleMarker
       center={[Number(relato.lat), Number(relato.lng)]}
-      radius={8}
+      radius={6}
       pathOptions={{
         color: '#ffffff',
         weight: 2,
         fillColor: cor,
-        fillOpacity: 0.9,
+        fillOpacity: 1,
       }}
     >
       <Popup>
