@@ -29,6 +29,8 @@ export function Reportar() {
   const [bairroId, setBairroId] = useState(user?.bairro?.id || null)
   const [nivel, setNivel] = useState('')
   const [descricao, setDescricao] = useState('')
+  const [imagem, setImagem] = useState(null)
+  const [previewImagem, setPreviewImagem] = useState(null)
 
   const [erros, setErros] = useState({})
   const [erroGeral, setErroGeral] = useState(null)
@@ -104,19 +106,61 @@ export function Reportar() {
 
   const formValido = localizacao !== null && nivel !== ''
 
+  const handleImagemChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) {
+      setImagem(null)
+      setPreviewImagem(null)
+      return
+    }
+
+    // Validar tipo de arquivo
+    if (!file.type.startsWith('image/')) {
+      setErros((prev) => ({ ...prev, imagem: 'Por favor, selecione uma imagem válida.' }))
+      return
+    }
+
+    // Validar tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErros((prev) => ({ ...prev, imagem: 'A imagem não pode ser maior que 5MB.' }))
+      return
+    }
+
+    setImagem(file)
+    setErros((prev) => {
+      const novoErros = { ...prev }
+      delete novoErros.imagem
+      return novoErros
+    })
+
+    // Criar preview
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      setPreviewImagem(event.target.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoverImagem = () => {
+    setImagem(null)
+    setPreviewImagem(null)
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErros({})
     setErroGeral(null)
     setSubmetendo(true)
     try {
-      await relatos.criar({
-        lat: localizacao.lat.toFixed(6),
-        lng: localizacao.lng.toFixed(6),
-        bairro: bairroId,
-        nivel,
-        descricao: descricao.trim(),
-      })
+      const formData = new FormData()
+      formData.append('lat', localizacao.lat.toFixed(6))
+      formData.append('lng', localizacao.lng.toFixed(6))
+      if (bairroId) formData.append('bairro', bairroId)
+      formData.append('nivel', nivel)
+      formData.append('descricao', descricao.trim())
+      if (imagem) formData.append('imagem', imagem)
+
+      await relatos.criar(formData)
       setSucesso(true)
       setTimeout(() => navigate('/', { replace: true }), 1500)
     } catch (err) {
@@ -302,6 +346,45 @@ export function Reportar() {
               />
               {erros.descricao && (
                 <p className="text-xs text-red-600 mt-1">{erros.descricao}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Imagem <span className="text-slate-400 font-normal">(opcional)</span>
+              </label>
+              {!previewImagem ? (
+                <label className="block w-full min-h-[180px] border-2 border-dashed border-slate-300 rounded-lg p-6 text-center cursor-pointer hover:bg-slate-50 transition">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImagemChange}
+                    className="hidden"
+                  />
+                  <div className="text-slate-600 text-sm">
+                    <div className="text-lg mb-1">📸</div>
+                    <div className="font-medium mb-0.5">Clique ou arraste uma imagem</div>
+                    <div className="text-xs text-slate-500">PNG, JPG ou GIF (máximo 5MB)</div>
+                  </div>
+                </label>
+              ) : (
+                <div className="space-y-3">
+                  <img
+                    src={previewImagem}
+                    alt="Preview"
+                    className="w-full h-auto max-h-48 object-cover rounded-lg border border-slate-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoverImagem}
+                    className="w-full px-3 py-2 text-sm text-slate-600 border border-slate-300 rounded-lg hover:bg-slate-50 transition"
+                  >
+                    Remover imagem
+                  </button>
+                </div>
+              )}
+              {erros.imagem && (
+                <p className="text-xs text-red-600 mt-2">{erros.imagem}</p>
               )}
             </div>
 

@@ -28,13 +28,16 @@ export const tokens = {
 
 export const api = axios.create({
   baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' },
 })
 
 api.interceptors.request.use((config) => {
   const access = tokens.getAccess()
+  config.headers = config.headers || {}
   if (access) {
     config.headers.Authorization = `Bearer ${access}`
+  }
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
   }
   return config
 })

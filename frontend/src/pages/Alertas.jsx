@@ -78,6 +78,7 @@ function RelatoCard({ relato, onAtualizado, onDeletado }) {
   const [salvando, setSalvando] = useState(false)
   const [deletando, setDeletando] = useState(false)
   const [erroCard, setErroCard] = useState(null)
+  const [imagemAberta, setImagemAberta] = useState(false)
 
   // Estado do formulário de edição
   const [nivel, setNivel] = useState(relato.nivel)
@@ -207,6 +208,50 @@ function RelatoCard({ relato, onAtualizado, onDeletado }) {
           relato.descricao && (
             <p className="text-sm text-white leading-relaxed">{relato.descricao}</p>
           )
+        )}
+
+        {relato.imagem && (
+          <>
+            <button
+              type="button"
+              onClick={() => setImagemAberta(true)}
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 w-full text-left"
+            >
+              <img
+                src={relato.imagem}
+                alt="Imagem do relato"
+                className="w-full h-48 object-cover transition duration-200 hover:opacity-90"
+              />
+            </button>
+
+            {imagemAberta && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+                role="dialog"
+                aria-modal="true"
+                onClick={() => setImagemAberta(false)}
+              >
+                <div className="relative max-w-[95vw] max-h-[95vh]">
+                  <img
+                    src={relato.imagem}
+                    alt="Imagem do relato"
+                    className="w-full h-auto max-h-[95vh] rounded-3xl shadow-2xl"
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setImagemAberta(false)
+                    }}
+                    className="absolute top-3 right-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black/80"
+                    aria-label="Fechar imagem"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* Erro inline */}

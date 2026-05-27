@@ -17,8 +17,8 @@ class RelatoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Relato
-        fields = ['id', 'user', 'lat', 'lng', 'bairro', 'nivel', 'descricao', 'created_at']
-        read_only_fields = fields
+        fields = ['id', 'user', 'lat', 'lng', 'bairro', 'nivel', 'descricao', 'imagem', 'created_at']
+        read_only_fields = ['id', 'user', 'bairro', 'created_at']
 
 
 class RelatoCreateSerializer(serializers.ModelSerializer):
@@ -30,7 +30,7 @@ class RelatoCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Relato
-        fields = ['lat', 'lng', 'bairro', 'nivel', 'descricao']
+        fields = ['lat', 'lng', 'bairro', 'nivel', 'descricao', 'imagem']
 
     def validate_lat(self, value):
         if not -90 <= value <= 90:

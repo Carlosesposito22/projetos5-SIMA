@@ -26,6 +26,7 @@ class Relato(models.Model):
     )
     nivel = models.CharField(max_length=10, choices=Nivel.choices)
     descricao = models.TextField(max_length=500, blank=True)
+    imagem = models.ImageField(upload_to='relatos/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
