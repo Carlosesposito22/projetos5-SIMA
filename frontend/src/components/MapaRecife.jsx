@@ -1,17 +1,19 @@
 /**
- * Mapa interativo de Recife (US01).
+ * Mapa interativo de Recife (US01 + US03).
  *
  * Camadas (de baixo pra cima):
  *  1. Tiles CartoDB Voyager (basemap limpo, sem POIs).
  *  2. GeoJSON dos bairros (contorno apenas — sem fill).
- *  3. Heatmap dos relatos das últimas 6h (visualização de intensidade).
- *  4. Marcadores clicáveis sobre o heatmap (popup com detalhe do relato).
+ *  3. Áreas de risco coloridas — círculos geográficos por relato, raio
+ *     em metros, cor casando com o nível (Atenção/Alerta/Crítico).
+ *     Pintam visualmente as ruas/quarteirões ao redor de cada ponto.
+ *  4. Marcadores clicáveis sobre as áreas (popup com detalhe do relato).
  */
 
 import { GeoJSON, MapContainer, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
-import { HeatmapRelatos } from './HeatmapRelatos'
+import { AreaRisco } from './AreaRisco'
 import { MarcadorRelato } from './MarcadorRelato'
 import { useBairrosGeoJSON } from '../lib/bairrosGeo'
 
@@ -61,7 +63,9 @@ export function MapaRecife({ relatos }) {
         />
       )}
 
-      <HeatmapRelatos relatos={relatos} />
+      {relatos.map((relato) => (
+        <AreaRisco key={`area-${relato.id}`} relato={relato} />
+      ))}
 
       {relatos.map((relato) => (
         <MarcadorRelato key={relato.id} relato={relato} />

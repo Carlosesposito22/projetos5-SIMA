@@ -19,6 +19,7 @@
 Recife é a 5ª cidade do Brasil em população exposta a riscos naturais (>206 mil moradores em áreas de inundação, IBGE). Em maio/2022 chuvas em PE deixaram 134 mortos. **O gargalo central NÃO é falta de dados — é a ausência de um fluxo que transforme dados em ação rápida e acessível.**
 
 Os sistemas existentes falham cada um de um jeito:
+
 - **Defesa Civil** — alerta tarde, genérico, depende de intervenção humana
 - **APAC** — dados confiáveis mas técnicos e inacessíveis ao morador
 - **Cemaden** — escala nacional, sacrifica precisão local; alerta vai pra Defesa Civil, não pro cidadão
@@ -75,7 +76,7 @@ Sistema **hiperlocal, preventivo e acessível** para áreas vulneráveis do Reci
 Todas tomadas sob a pergunta-filtro: **"O que é estritamente necessário para validar a solução no MVP?"**
 
 | Decisão | Em vez de | Por quê |
-|---|---|---|
+| --- | --- | --- |
 | **Crowdsourcing** (relato do morador) | Sensores físicos IoT (ESP-32) | Elimina custo de hardware, instalação e infraestrutura de transmissão. Comunidade já está nos pontos de risco antes de qualquer sensor. Valida engajamento antes de investir em hardware. |
 | **PostgreSQL** (relacional simples) | Híbrido NoSQL + PostgreSQL | Volume de dados do MVP é controlado. Relacional resolve com menos complexidade. |
 | **Regressão Linear** | RNN / Deep Learning | Treina com pouco dado, é interpretável, suficiente para identificar tendência. RNN fica como evolução futura. |
@@ -83,7 +84,8 @@ Todas tomadas sob a pergunta-filtro: **"O que é estritamente necessário para v
 | **WhatsApp** | App mobile nativo (notificação push) | 85%+ dos usuários preferiram. App nativo exige adoção em massa. WhatsApp já está instalado. |
 | **APIs meteorológicas externas** | Radares meteorológicos próprios | Custo proibitivo. OpenWeather/Tomorrow.io/APAC já dão precisão suficiente. |
 
-**APIs avaliadas (Ideação Generativa):**
+### APIs avaliadas (Ideação Generativa)
+
 - **OpenWeather** — 1.000 req/dia gratuito, REST simples, previsão 5 dias. Boa relação custo/integração.
 - **Tomorrow.io** — 500 req/dia, alta precisão por coordenada GPS, ideal pra alerta hiperlocal por bairro.
 - **APAC (Pernambuco)** — pública e gratuita, dados locais de rios em PE, mas formato não-padronizado (sem suporte oficial pra integração via API).
@@ -92,19 +94,23 @@ Todas tomadas sob a pergunta-filtro: **"O que é estritamente necessário para v
 
 ## 7. Escopo (MoSCoW)
 
-**Must have**
+### Must have
+
 - Integração com APIs meteorológicas
 - Algoritmo de gatilho (trigger) que dispara alerta ao detectar nível crítico em uma região
 - Dashboard de monitoramento com status (Normal / Atenção / Alerta) por ponto
 
-**Should have**
+### Should have
+
 - Filtros por bairro / tipo de risco / nível de urgência
 - Gráficos de tendência (subida/descida do nível nas últimas horas)
 
-**Could have**
+### Could have
+
 - Previsão de curto prazo (próximos 30 min) com modelo matemático simples
 
-**Won't have (nesta fase)**
+### Won't have (nesta fase)
+
 - Hardware próprio (radares, sensores físicos)
 - Deep Learning / RNNs
 - WebSockets em tempo real
@@ -118,7 +124,7 @@ O backlog do MVP é composto por **exatamente 10 histórias do usuário**, distr
 
 > **Status atual:** ✅ entregue · 🔜 próxima fila · ⏳ pendente. Detalhes técnicos em [`TECNICO.md`](TECNICO.md) §8.
 
-**👤 Cidadão / Usuário Final**
+### 👤 Cidadão / Usuário Final
 
 - ✅ **US01 — Ver alertas no mapa:** como cidadão de Recife, quero visualizar em um mapa interativo os pontos de alagamento em tempo real, para que eu possa planejar minha rota antes de sair de casa.
 - ⏳ **US02 — Receber notificação de alerta:** como morador de uma área de risco, quero receber uma notificação imediata quando um alagamento for detectado no meu bairro, para que eu possa tomar uma ação preventiva com antecedência.
@@ -126,13 +132,13 @@ O backlog do MVP é composto por **exatamente 10 histórias do usuário**, distr
 - ✅ **US04 — Registrar um relato:** como usuário do aplicativo, quero reportar manualmente um alagamento que estou presenciando, para que outras pessoas sejam avisadas mais rapidamente.
 - ⏳ **US05 — Acessar pelo WhatsApp:** como cidadão que não tem o app instalado, quero receber alertas pelo WhatsApp, para que eu seja informado mesmo sem precisar baixar nada.
 
-**🚨 Agente da Defesa Civil / Gestor Urbano**
+### 🚨 Agente da Defesa Civil / Gestor Urbano
 
 - ✅ **US06 — Monitorar todos os pontos no dashboard:** como operador da Defesa Civil, quero visualizar um painel com o status de todos os pontos monitorados de Recife, para que eu possa coordenar as equipes de campo com agilidade.
 - ⏳ **US07 — Receber gatilho automático de nível crítico:** como gestor de emergências, quero que o sistema dispare um alerta automático quando o nível da água atingir o threshold crítico, para que a resposta operacional seja iniciada sem depender de monitoramento manual constante.
 - 🔜 **US08 — Filtrar alertas por bairro:** como operador, quero filtrar os alertas por bairro ou região, para que eu consiga priorizar as áreas com maior concentração de ocorrências.
 
-**🔧 Administrador do Sistema**
+### 🔧 Administrador do Sistema
 
 - ⏳ **US09 — Cadastrar novo sensor IoT:** como administrador, quero registrar um novo sensor no sistema informando sua localização e tipo, para que ele comece a enviar dados e aparecer no mapa.
 - ✅ **US10 — Autenticar no sistema:** como administrador ou operador, quero fazer login com usuário e senha (ou via WhatsApp), para que o acesso ao painel seja seguro e controlado. *(Login WhatsApp ainda pendente — só email+senha por enquanto.)*

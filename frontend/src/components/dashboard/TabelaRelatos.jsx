@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react'
 
-const ROTULOS_NIVEL = { baixo: 'Baixo', medio: 'Médio', alto: 'Alto' }
+import { ROTULOS_NIVEL } from '../../lib/relatos'
 
 const CORES_NIVEL = {
   baixo: 'bg-emerald-100 text-emerald-800',

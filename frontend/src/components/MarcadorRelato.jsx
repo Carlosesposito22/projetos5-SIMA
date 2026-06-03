@@ -1,23 +1,20 @@
 /**
- * Marcador clicável de um relato — fica por cima do heatmap.
+ * Marcador clicável de um relato — fica por cima das áreas pintadas.
  *
- * Raio pequeno (6px) com borda branca pra destacar contra o gradiente.
- * O heatmap dá o impacto visual; o marcador entrega a interatividade
- * (popup com nível, bairro, autor, horário, descrição).
+ * Ponto pequeno (raio 6px) com borda branca pra destacar contra os
+ * círculos coloridos de risco. As áreas pintadas dão o impacto visual;
+ * o marcador entrega a interatividade (popup com nível, bairro, autor,
+ * horário, descrição).
  */
 
 import { CircleMarker, Popup } from 'react-leaflet'
+
+import { ROTULOS_NIVEL } from '../lib/relatos'
 
 const CORES = {
   baixo: '#10b981',
   medio: '#f59e0b',
   alto: '#dc2626',
-}
-
-const ROTULOS = {
-  baixo: 'Baixo',
-  medio: 'Médio',
-  alto: 'Alto',
 }
 
 function formatarTempoRelativo(timestamp) {
@@ -31,7 +28,7 @@ function formatarTempoRelativo(timestamp) {
 
 export function MarcadorRelato({ relato }) {
   const cor = CORES[relato.nivel] || '#64748b'
-  const rotulo = ROTULOS[relato.nivel] || relato.nivel
+  const rotulo = ROTULOS_NIVEL[relato.nivel] || relato.nivel
   const bairro = relato.bairro?.nome || 'Bairro não informado'
   const autor = relato.user?.nome || 'Anônimo'
 

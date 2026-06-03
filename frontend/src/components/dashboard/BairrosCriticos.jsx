@@ -3,7 +3,7 @@
  * Cada item mostra o ranking, nome, badge do nível máximo e total.
  */
 
-const ROTULOS_NIVEL = { baixo: 'Baixo', medio: 'Médio', alto: 'Alto' }
+import { ROTULOS_NIVEL } from '../../lib/relatos'
 
 const CORES_NIVEL = {
   baixo: 'bg-emerald-100 text-emerald-800',

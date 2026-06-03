@@ -14,7 +14,7 @@
 | **Estilização** | **Tailwind CSS v4** | Via plugin oficial `@tailwindcss/vite`. Sem `tailwind.config.js` — `@import "tailwindcss";` em [`src/index.css`](frontend/src/index.css). |
 | **Roteamento** | React Router v7 | `BrowserRouter`, rotas aninhadas pro painel (`/dashboard`, `/dashboard/graficos`). |
 | **HTTP** | Axios | Instância em [`src/lib/api.js`](frontend/src/lib/api.js) com interceptor que injeta `Bearer` e renova access via refresh quando dá 401. |
-| **Mapa** | Leaflet + react-leaflet + leaflet.heat | Tiles CartoDB Voyager, contorno de bairros via GeoJSON, heatmap de relatos. |
+| **Mapa** | Leaflet + react-leaflet | Tiles CartoDB Voyager, contorno de bairros via GeoJSON, áreas de risco pintadas (círculos geográficos coloridos por nível de severidade — Atenção/Alerta/Crítico). |
 | **Gráficos** | Recharts 2.x | `BarChart`, `PieChart`, `ResponsiveContainer` na aba "Gráficos" do painel. |
 | **Backend** | **Python 3.12 + Django 6 + DRF** | Apps modulares em `backend/apps/`. |
 | **Auth** | `djangorestframework-simplejwt[crypto]` | Email como `USERNAME_FIELD`. Access 60min + refresh 7d com rotação + blacklist. |
@@ -98,8 +98,8 @@ projetos5-SIMA/
 │       ├── components/
 │       │   ├── ProtectedRoute.jsx  # ProtectedRoute + PublicOnly + RoleProtectedRoute
 │       │   ├── MenuPerfil.jsx      # dropdown de perfil + sair
-│       │   ├── MapaRecife.jsx      # Leaflet + heatmap + marcadores
-│       │   ├── HeatmapRelatos.jsx
+│       │   ├── MapaRecife.jsx      # Leaflet + áreas pintadas + marcadores
+│       │   ├── AreaRisco.jsx       # círculo geográfico colorido por nível
 │       │   ├── MarcadorRelato.jsx
 │       │   ├── LegendaNiveis.jsx
 │       │   ├── NivelSelector.jsx
@@ -260,8 +260,8 @@ A trilha do 5º CC exige entregáveis específicos que devem viver em `ml/`. **N
 - [x] **US10** — User customizado (email), JWT (access + refresh + rotação + blacklist), endpoints register/login/refresh/logout/me, admin customizado, tabs Cidadão/Defesa Civil no front, `RoleProtectedRoute`
 - [x] **Bairros** — model + seed migration com bairros oficiais de Recife (`apps.areas_risco`)
 - [x] **US04** — model `Relato` com FK pra Bairro, `nivel`, `descricao`, `imagem` (ImageField + Pillow); ViewSet DRF com CRUD; form React + Leaflet pra escolher ponto; suporte a edição/exclusão (PR #1)
-- [x] **US01** — mapa do cidadão com Leaflet + contornos GeoJSON de bairros + heatmap de relatos + marcadores clicáveis; polling 30s
-- [x] **US03** — marcadores e badges coloridos por nível (baixo/médio/alto = emerald/amber/red), legenda fixa no mapa
+- [x] **US01** — mapa do cidadão com Leaflet + contornos GeoJSON de bairros + áreas de risco pintadas (círculos geográficos coloridos) + marcadores clicáveis; polling 30s
+- [x] **US03** — vocabulário Atenção/Alerta/Crítico em toda UI (rótulos centralizados em `lib/relatos.js`); áreas pintadas no mapa em verde/âmbar/vermelho com raio crescente por severidade (60/90/130m); marcadores e badges combinando; legenda fixa explica os 3 níveis com descrição
 - [x] **US06** — endpoint `/api/dashboard/resumo/`, permission `IsDefesaCivilOrAdmin`, painel React com 4 KPIs, mapa, "Bairros críticos", tabela com coluna Foto + lightbox, aba "Gráficos" com Recharts (barras empilhadas, pizza, top bairros), polling 30s, redirect automático de operador pra `/dashboard`
 
 ### 8.2. 🔜 Próxima fila

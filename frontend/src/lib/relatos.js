@@ -31,23 +31,35 @@ export const relatos = {
   },
 }
 
+/**
+ * Níveis de severidade do alagamento (US03).
+ *
+ * ``valor`` (baixo/medio/alto) é o identificador interno que vai pro banco
+ * e nunca muda. ``rotulo`` é o que o usuário vê — alinhado ao vocabulário
+ * do backlog: Atenção / Alerta / Crítico.
+ */
 export const NIVEIS = [
   {
     valor: 'baixo',
-    rotulo: 'Baixo',
+    rotulo: 'Atenção',
     descricao: 'Poças, água no meio-fio',
     cor: 'emerald',
   },
   {
     valor: 'medio',
-    rotulo: 'Médio',
+    rotulo: 'Alerta',
     descricao: 'Cobre a calçada / parte da rua',
     cor: 'amber',
   },
   {
     valor: 'alto',
-    rotulo: 'Alto',
+    rotulo: 'Crítico',
     descricao: 'Rua intransitável, água entrando em imóveis',
     cor: 'red',
   },
 ]
+
+// Helper pra quem só quer o rótulo a partir do valor.
+export const ROTULOS_NIVEL = Object.fromEntries(
+  NIVEIS.map((n) => [n.valor, n.rotulo])
+)

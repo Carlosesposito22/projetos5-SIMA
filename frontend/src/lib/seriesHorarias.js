@@ -6,8 +6,9 @@
  * fuso do navegador (que pra o operador da Defesa Civil é Recife).
  */
 
+import { ROTULOS_NIVEL } from './relatos'
+
 const NIVEIS = ['baixo', 'medio', 'alto']
-const ROTULOS = { baixo: 'Baixo', medio: 'Médio', alto: 'Alto' }
 
 /**
  * Bucketiza relatos em janelas de 1h, do passado pro presente.
@@ -51,7 +52,7 @@ export function gerarDistribuicaoNivel(relatos) {
   }
   return NIVEIS
     .filter((n) => contagem[n] > 0)
-    .map((n) => ({ nivel: n, rotulo: ROTULOS[n], valor: contagem[n] }))
+    .map((n) => ({ nivel: n, rotulo: ROTULOS_NIVEL[n], valor: contagem[n] }))
 }
 
 /**
