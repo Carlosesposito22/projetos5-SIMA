@@ -10,13 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
     "axios": "^1.7.0",
+    "heroicons": "^2.2.0",
     "leaflet": "^1.9.4",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-leaflet": "^5.0.0",
     "react-router-dom": "^7.0.0",
-    "recharts": "^2.13.0"
+    "recharts": "^2.15.4"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

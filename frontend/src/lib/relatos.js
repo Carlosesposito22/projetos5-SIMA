@@ -12,14 +12,6 @@ export const relatos = {
   listar: (params) =>
     api.get('/api/relatos/', { params }).then((r) => r.data),
   detalhe: (id) => api.get(`/api/relatos/${id}/`).then((r) => r.data),
-  /**
-   * Lista TODOS os relatos correspondentes (atravessa páginas do DRF).
-   *
-   * O endpoint usa PageNumberPagination (PAGE_SIZE=20). Pro mapa precisamos
-   * de todos os relatos da janela, então seguimos `next` até esgotar.
-   * A primeira chamada usa `params`; as próximas vão direto na URL `next`
-   * (que já carrega os mesmos filtros).
-   */
   listarTodos: async (params) => {
     let resposta = await api.get('/api/relatos/', { params })
     let todos = resposta.data.results || resposta.data
@@ -28,6 +20,16 @@ export const relatos = {
       todos = todos.concat(resposta.data.results || resposta.data)
     }
     return todos
+  },
+
+  // US08 — denúncia de alerta falso
+  denunciar: async (id) => {
+    const { data } = await api.post(`/api/relatos/${id}/denunciar/`)
+    return data
+  },
+  desfazerDenuncia: async (id) => {
+    const { data } = await api.delete(`/api/relatos/${id}/denunciar/`)
+    return data
   },
 }
 

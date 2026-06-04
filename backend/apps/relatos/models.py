@@ -41,3 +41,21 @@ class Relato(models.Model):
 
     def __str__(self):
         return f'Relato #{self.pk} ({self.get_nivel_display()}) — {self.bairro or "sem bairro"}'
+    
+
+class Denuncia(models.Model):
+    """Um usuário denuncia um relato como incorreto (alerta falso)."""
+    relato = models.ForeignKey(
+        Relato,
+        on_delete=models.CASCADE,
+        related_name='denuncias',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='denuncias',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('relato', 'user')  # impede duplicata

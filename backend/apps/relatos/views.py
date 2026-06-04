@@ -5,6 +5,7 @@ from django.utils.timezone import now
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from .models import Relato, Denuncia
 
 from .models import Relato
 from .serializers import RelatoCreateSerializer, RelatoSerializer
@@ -73,7 +74,7 @@ class RelatoListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         relato = serializer.save(user=request.user)
-        return Response(RelatoSerializer(relato).data, status=status.HTTP_201_CREATED)
+        return Response(RelatoSerializer(relato, context=self.get_serializer_context()).data, status=status.HTTP_201_CREATED)
 
 
 class RelatoDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -102,3 +103,38 @@ class RelatoDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+class RelatoDenunciaView(generics.GenericAPIView):
+    """POST /api/relatos/<id>/denunciar/ — denuncia um relato como alerta falso.
+    DELETE /api/relatos/<id>/denunciar/ — desfaz a denúncia.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_relato(self, pk):
+        return generics.get_object_or_404(Relato, pk=pk)
+
+    def post(self, request, pk):
+        relato = self.get_relato(pk)
+        if relato.user == request.user:
+            return Response(
+                {'detail': 'Você não pode denunciar seu próprio relato.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        _, criada = Denuncia.objects.get_or_create(relato=relato, user=request.user)
+        if not criada:
+            return Response(
+                {'detail': 'Você já denunciou este relato.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        total = relato.denuncias.count()
+        return Response({'total_denuncias': total}, status=status.HTTP_201_CREATED)
+
+    def delete(self, request, pk):
+        relato = self.get_relato(pk)
+        deleted, _ = Denuncia.objects.filter(relato=relato, user=request.user).delete()
+        if not deleted:
+            return Response(
+                {'detail': 'Você não havia denunciado este relato.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({'total_denuncias': relato.denuncias.count()})
