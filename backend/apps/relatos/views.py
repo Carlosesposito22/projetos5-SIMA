@@ -5,9 +5,8 @@ from django.utils.timezone import now
 from rest_framework import generics, permissions, status
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from .models import Relato, Denuncia
+from .models import Relato, Denuncia, Confirmacao
 
-from .models import Relato
 from .serializers import RelatoCreateSerializer, RelatoSerializer
 
 
@@ -138,3 +137,40 @@ class RelatoDenunciaView(generics.GenericAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return Response({'total_denuncias': relato.denuncias.count()})
+
+class RelatoConfirmacaoView(generics.GenericAPIView):
+    """POST   /api/relatos/<id>/confirmar/ — confirma um relato como verdadeiro.
+    DELETE /api/relatos/<id>/confirmar/ — desfaz a confirmação.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_relato(self, pk):
+        return generics.get_object_or_404(Relato, pk=pk)
+
+    def post(self, request, pk):
+        relato = self.get_relato(pk)
+        if relato.user == request.user:
+            return Response(
+                {'detail': 'Você não pode confirmar seu próprio relato.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        _, criada = Confirmacao.objects.get_or_create(relato=relato, user=request.user)
+        if not criada:
+            return Response(
+                {'detail': 'Você já confirmou este relato.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response(
+            {'total_confirmacoes': relato.confirmacoes.count()},
+            status=status.HTTP_201_CREATED,
+        )
+
+    def delete(self, request, pk):
+        relato = self.get_relato(pk)
+        deleted, _ = Confirmacao.objects.filter(relato=relato, user=request.user).delete()
+        if not deleted:
+            return Response(
+                {'detail': 'Você não havia confirmado este relato.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return Response({'total_confirmacoes': relato.confirmacoes.count()})

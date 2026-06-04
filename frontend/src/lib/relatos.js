@@ -31,6 +31,14 @@ export const relatos = {
     const { data } = await api.delete(`/api/relatos/${id}/denunciar/`)
     return data
   },
+  confirmar: async (id) => {
+    const { data } = await api.post(`/api/relatos/${id}/confirmar/`)
+    return data
+  },
+  desconfirmar: async (id) => {
+    const { data } = await api.delete(`/api/relatos/${id}/confirmar/`)
+    return data
+  },
 }
 
 /**

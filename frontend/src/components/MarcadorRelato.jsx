@@ -11,6 +11,7 @@ import { CircleMarker, Popup } from 'react-leaflet'
 
 import { BotaoDenuncia } from './BotaoDenuncia'
 import { ROTULOS_NIVEL } from '../lib/relatos'
+import { BotaoConfirmacao } from './BotaoConfirmacao'
 
 const CORES = {
   baixo: '#10b981',
@@ -65,11 +66,22 @@ export function MarcadorRelato({ relato }) {
           </div>
 
           {/* US08 — denúncia de alerta falso */}
-          <BotaoDenuncia
-            relatoId={relato.id}
-            totalInicial={relato.total_denuncias ?? 0}
-            jaDenunciou={relato.ja_denunciou ?? false}
-          />
+          <div className="pt-3 border-t border-slate-100 space-y-2">
+            <div className="flex items-center gap-2">
+              <BotaoConfirmacao
+                relatoId={relato.id}
+                totalInicial={relato.total_confirmacoes}
+                jaConfirmouInicial={relato.ja_confirmou}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <BotaoDenuncia
+                relatoId={relato.id}
+                totalInicial={relato.total_denuncias}
+                jaDenunciouInicial={relato.ja_denunciou}
+              />
+            </div>
+          </div>
         </div>
       </Popup>
     </CircleMarker>

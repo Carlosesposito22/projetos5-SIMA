@@ -59,3 +59,20 @@ class Denuncia(models.Model):
 
     class Meta:
         unique_together = ('relato', 'user')  # impede duplicata
+        
+class Confirmacao(models.Model):
+    """Um usuário confirma que um relato é verdadeiro."""
+    relato = models.ForeignKey(
+        Relato,
+        on_delete=models.CASCADE,
+        related_name='confirmacoes',
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='confirmacoes',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('relato', 'user')
