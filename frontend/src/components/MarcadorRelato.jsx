@@ -4,11 +4,12 @@
  * Ponto pequeno (raio 6px) com borda branca pra destacar contra os
  * círculos coloridos de risco. As áreas pintadas dão o impacto visual;
  * o marcador entrega a interatividade (popup com nível, bairro, autor,
- * horário, descrição).
+ * horário, descrição e botão de denúncia de alerta falso — US08).
  */
 
 import { CircleMarker, Popup } from 'react-leaflet'
 
+import { BotaoDenuncia } from './BotaoDenuncia'
 import { ROTULOS_NIVEL } from '../lib/relatos'
 
 const CORES = {
@@ -62,6 +63,13 @@ export function MarcadorRelato({ relato }) {
           <div className="text-xs text-slate-500 pt-1 border-t border-slate-100">
             Reportado por {autor}
           </div>
+
+          {/* US08 — denúncia de alerta falso */}
+          <BotaoDenuncia
+            relatoId={relato.id}
+            totalInicial={relato.total_denuncias ?? 0}
+            jaDenunciou={relato.ja_denunciou ?? false}
+          />
         </div>
       </Popup>
     </CircleMarker>
