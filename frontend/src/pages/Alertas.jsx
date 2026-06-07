@@ -129,7 +129,7 @@ function RelatoCard({ relato, onAtualizado, onDeletado }) {
         />
       )}
 
-      <div className={`bg-blue-800 rounded-xl ${editando ? 'border-l-blue-400' : cfg.card} shadow-sm p-5 flex flex-col gap-3 transition-all`}>
+      <div className={`bg-white rounded-xl border-l-4 ${editando ? 'border-l-blue-400' : cfg.card} border border-slate-200 shadow-sm p-5 flex flex-col gap-3 transition-all`}>
         {/* Cabeçalho */}
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-2 flex-wrap">
@@ -159,7 +159,7 @@ function RelatoCard({ relato, onAtualizado, onDeletado }) {
               </span>
             )}
             {relato.bairro && !editando && (
-              <span className="text-sm text-white font-medium">{relato.bairro.nome}</span>
+              <span className="text-sm text-slate-700 font-medium">{relato.bairro.nome}</span>
             )}
           </div>
 
@@ -167,8 +167,8 @@ function RelatoCard({ relato, onAtualizado, onDeletado }) {
             {!editando && (
               <>
                 <div className="text-right mr-2">
-                  <p className="text-sm text-white font-medium">{dataStr}</p>
-                  <p className="text-xs text-white">{horaStr}</p>
+                  <p className="text-sm text-slate-700 font-medium">{dataStr}</p>
+                  <p className="text-xs text-slate-500">{horaStr}</p>
                 </div>
                 {/* Botão editar */}
                 <button
@@ -202,11 +202,11 @@ function RelatoCard({ relato, onAtualizado, onDeletado }) {
             onChange={e => setDescricao(e.target.value)}
             rows={3}
             placeholder="Descrição (opcional)"
-            className="w-full text-white border border-slate-200 rounded-lg px-3 py-2 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
           />
         ) : (
           relato.descricao && (
-            <p className="text-sm text-white leading-relaxed">{relato.descricao}</p>
+            <p className="text-sm text-slate-700 leading-relaxed">{relato.descricao}</p>
           )
         )}
 
@@ -285,7 +285,7 @@ function RelatoCard({ relato, onAtualizado, onDeletado }) {
                 href={`https://maps.google.com/?q=${relato.lat},${relato.lng}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-white font-medium"
+                className="inline-flex items-center gap-1.5 text-blue-600 text-sm font-medium"
               >
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
@@ -305,7 +305,7 @@ function RelatoCard({ relato, onAtualizado, onDeletado }) {
 function ResumoNivel({ nivel, count }) {
   const cfg = NIVEL[nivel]
   return (
-    <div className="bg-white rounded-xl border border-slate-400 shadow-lg p-4 flex flex-col gap-1.5">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 flex flex-col gap-1.5">
       <span className="text-2xl font-bold text-slate-800">{count}</span>
       <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${cfg.badge} rounded-full px-2 py-0.5 w-fit`}>
         <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
