@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { relatos as relatosService } from '../lib/relatos'
-import { FlagIcon } from '@heroicons/react/16/solid'
+import { FlagIcon } from '@heroicons/react/24/solid'
 
 export function BotaoDenuncia({ relatoId, totalInicial = 0, jaDenunciou: inicialDenunciou = false }) {
   const { user } = useAuth()
