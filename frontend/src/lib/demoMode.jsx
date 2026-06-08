@@ -232,6 +232,70 @@ const RELATOS_FAKE = [
     descricao: 'Açude transbordou, ruas próximas tomadas.',
     minutosAtras: 6,
   },
+
+  // ── Dia de chuva forte — 48 relatos adicionais ───────────────────────
+  // Distribuídos de ~7 min até ~18h atrás, com pico em 30-180 min.
+  // Formato one-liner pra densidade visual; mantém o mesmo schema.
+
+  // 5-30 min — urgentes
+  { id: 'demo-19', lat: -8.0805, lng: -34.9225, bairro: { nome: 'Afogados' }, user: { nome: 'Bruno T.' }, nivel: 'alto', descricao: 'Av. Recife totalmente parada, ônibus boiando.', minutosAtras: 7 },
+  { id: 'demo-20', lat: -8.1135, lng: -34.9020, bairro: { nome: 'Boa Viagem' }, user: { nome: 'Camila R.' }, nivel: 'alto', descricao: 'Av. Cons. Aguiar com cerca de 60cm de água.', minutosAtras: 11 },
+  { id: 'demo-21', lat: -8.1325, lng: -34.9440, bairro: { nome: 'Ibura' }, user: { nome: 'Diego N.' }, nivel: 'alto', descricao: 'UR-2 inteira tomada, vizinhos subindo móveis.', minutosAtras: 14 },
+  { id: 'demo-22', lat: -8.0395, lng: -34.9505, bairro: { nome: 'Várzea' }, user: { nome: 'Elaine F.' }, nivel: 'alto', descricao: 'Capibaribe transbordou de novo, casas atingidas.', minutosAtras: 19 },
+  { id: 'demo-23', lat: -8.0780, lng: -34.8915, bairro: { nome: 'Coque' }, user: { nome: 'Felipe G.' }, nivel: 'medio', descricao: 'Ruas internas começando a alagar perto do canal.', minutosAtras: 24 },
+  { id: 'demo-24', lat: -8.1180, lng: -34.9090, bairro: { nome: 'Imbiribeira' }, user: { nome: 'Gabriela L.' }, nivel: 'medio', descricao: 'Geraldão fechou pro público, ruas em volta inundadas.', minutosAtras: 28 },
+
+  // 30-90 min — auge
+  { id: 'demo-25', lat: -8.0810, lng: -34.9220, bairro: { nome: 'Afogados' }, user: { nome: 'Hugo M.' }, nivel: 'alto', descricao: 'Linha do trem com água acima dos trilhos.', minutosAtras: 34 },
+  { id: 'demo-26', lat: -8.1145, lng: -34.9040, bairro: { nome: 'Boa Viagem' }, user: { nome: 'Iara P.' }, nivel: 'medio', descricao: 'Av. Eng. Domingos Ferreira intransitável de carro.', minutosAtras: 38 },
+  { id: 'demo-27', lat: -8.0820, lng: -34.9215, bairro: { nome: 'Afogados' }, user: { nome: 'Jorge S.' }, nivel: 'alto', descricao: 'Largo da Paz com mais de 1m de água.', minutosAtras: 42 },
+  { id: 'demo-28', lat: -8.1180, lng: -34.9100, bairro: { nome: 'Imbiribeira' }, user: { nome: 'Kátia W.' }, nivel: 'alto', descricao: 'Av. Mascarenhas de Morais com carros boiando.', minutosAtras: 46 },
+  { id: 'demo-29', lat: -8.1330, lng: -34.9450, bairro: { nome: 'Ibura' }, user: { nome: 'Léo R.' }, nivel: 'alto', descricao: 'UR-3 também atingida, várias famílias desabrigadas.', minutosAtras: 52 },
+  { id: 'demo-30', lat: -8.0930, lng: -34.9285, bairro: { nome: 'Mustardinha' }, user: { nome: 'Marta H.' }, nivel: 'medio', descricao: 'Ruas perto da feira inteiras alagadas.', minutosAtras: 58 },
+  { id: 'demo-31', lat: -8.1095, lng: -34.9355, bairro: { nome: 'Caçote' }, user: { nome: 'Nilson J.' }, nivel: 'medio', descricao: 'Av. dos Caçotes com bolsões grandes.', minutosAtras: 65 },
+  { id: 'demo-32', lat: -8.1185, lng: -34.9355, bairro: { nome: 'Sancho' }, user: { nome: 'Olga V.' }, nivel: 'medio', descricao: 'Ruas internas com água até o meio do pneu.', minutosAtras: 71 },
+  { id: 'demo-33', lat: -8.0760, lng: -34.9280, bairro: { nome: 'Bongi' }, user: { nome: 'Paula E.' }, nivel: 'medio', descricao: 'Av. Caxangá com bolsão enorme perto do retorno.', minutosAtras: 78 },
+  { id: 'demo-34', lat: -8.0445, lng: -34.9100, bairro: { nome: 'Madalena' }, user: { nome: 'Quésia A.' }, nivel: 'medio', descricao: 'Rua da Hora subindo, comércios fechando.', minutosAtras: 85 },
+
+  // 90-180 min — segunda onda
+  { id: 'demo-35', lat: -8.0395, lng: -34.8895, bairro: { nome: 'Encruzilhada' }, user: { nome: 'Rafael I.' }, nivel: 'medio', descricao: 'Av. Beberibe com lentidão e poças grandes.', minutosAtras: 95 },
+  { id: 'demo-36', lat: -8.0290, lng: -34.9085, bairro: { nome: 'Casa Amarela' }, user: { nome: 'Simone D.' }, nivel: 'baixo', descricao: 'Bueiros transbordando na Estrada do Encanamento.', minutosAtras: 102 },
+  { id: 'demo-37', lat: -8.0455, lng: -34.9175, bairro: { nome: 'Torre' }, user: { nome: 'Túlio K.' }, nivel: 'medio', descricao: 'Av. Caxangá lenta, água cobrindo faixa direita.', minutosAtras: 110 },
+  { id: 'demo-38', lat: -8.0815, lng: -34.9410, bairro: { nome: 'Areias' }, user: { nome: 'Úrsula B.' }, nivel: 'medio', descricao: 'Estrada dos Remédios com retornos parados.', minutosAtras: 118 },
+  { id: 'demo-39', lat: -8.0530, lng: -34.9305, bairro: { nome: 'Cordeiro' }, user: { nome: 'Vânia F.' }, nivel: 'medio', descricao: 'Rua do Cordeiro com vários carros parados.', minutosAtras: 125 },
+  { id: 'demo-40', lat: -8.0680, lng: -34.8945, bairro: { nome: 'Recife' }, user: { nome: 'Wagner T.' }, nivel: 'alto', descricao: 'Bairro do Recife alagado, ruas centrais bloqueadas.', minutosAtras: 132 },
+  { id: 'demo-41', lat: -8.0775, lng: -34.8730, bairro: { nome: 'Brasília Teimosa' }, user: { nome: 'Xênia P.' }, nivel: 'alto', descricao: 'Maré alta + chuva, ruas inteiras submersas.', minutosAtras: 138 },
+  { id: 'demo-42', lat: -8.0735, lng: -34.9015, bairro: { nome: 'Joana Bezerra' }, user: { nome: 'Yago R.' }, nivel: 'medio', descricao: 'Av. Sul com bolsões e ônibus parados.', minutosAtras: 145 },
+  { id: 'demo-43', lat: -8.0700, lng: -34.9185, bairro: { nome: 'Mangueira' }, user: { nome: 'Zélia C.' }, nivel: 'medio', descricao: 'Ruas da comunidade com cerca de 30cm de água.', minutosAtras: 152 },
+  { id: 'demo-44', lat: -8.0510, lng: -34.9460, bairro: { nome: 'Engenho do Meio' }, user: { nome: 'Adriano M.' }, nivel: 'baixo', descricao: 'Trânsito mais lento, poças nas avenidas.', minutosAtras: 160 },
+  { id: 'demo-45', lat: -8.0605, lng: -34.9450, bairro: { nome: 'Iputinga' }, user: { nome: 'Bia S.' }, nivel: 'medio', descricao: 'Av. Caxangá próximo ao Geraldão lenta.', minutosAtras: 168 },
+  { id: 'demo-46', lat: -8.1305, lng: -34.9445, bairro: { nome: 'Cohab' }, user: { nome: 'Caio H.' }, nivel: 'alto', descricao: 'Av. Dois Rios com casas inundadas.', minutosAtras: 175 },
+
+  // 3-5h — recapitulando a tarde
+  { id: 'demo-47', lat: -8.1185, lng: -34.9450, bairro: { nome: 'Jiquiá' }, user: { nome: 'Débora L.' }, nivel: 'medio', descricao: 'Várias ruas com bolsões há horas.', minutosAtras: 195 },
+  { id: 'demo-48', lat: -8.0315, lng: -34.9050, bairro: { nome: 'Tamarineira' }, user: { nome: 'Eron G.' }, nivel: 'baixo', descricao: 'Avenida 17 de Agosto com poças, mas trafegável.', minutosAtras: 210 },
+  { id: 'demo-49', lat: -8.0040, lng: -34.9450, bairro: { nome: 'Brejo da Guabiraba' }, user: { nome: 'Fátima K.' }, nivel: 'medio', descricao: 'Ladeiras com água descendo forte.', minutosAtras: 225 },
+  { id: 'demo-50', lat: -8.0010, lng: -34.9175, bairro: { nome: 'Alto José Bonifácio' }, user: { nome: 'Gabriel U.' }, nivel: 'medio', descricao: 'Subida da Macaxeira com risco de deslizamento.', minutosAtras: 240 },
+  { id: 'demo-51', lat: -8.0295, lng: -34.9395, bairro: { nome: 'Macaxeira' }, user: { nome: 'Helena Z.' }, nivel: 'alto', descricao: 'Bairro inteiro com ruas alagadas, pessoas evacuando.', minutosAtras: 255 },
+  { id: 'demo-52', lat: -8.0395, lng: -34.8985, bairro: { nome: 'Rosarinho' }, user: { nome: 'Inácio P.' }, nivel: 'baixo', descricao: 'Av. Norte com poças, fluxo normal.', minutosAtras: 270 },
+  { id: 'demo-53', lat: -8.0305, lng: -34.8920, bairro: { nome: 'Hipódromo' }, user: { nome: 'Júlia D.' }, nivel: 'medio', descricao: 'Av. Beberibe com lentidão.', minutosAtras: 282 },
+  { id: 'demo-54', lat: -8.1320, lng: -34.9100, bairro: { nome: 'Setúbal' }, user: { nome: 'Kleber V.' }, nivel: 'medio', descricao: 'Rua Setúbal com bolsão grande na altura do shopping.', minutosAtras: 295 },
+
+  // 5-10h — manhã
+  { id: 'demo-55', lat: -8.0395, lng: -34.9075, bairro: { nome: 'Madalena' }, user: { nome: 'Lara T.' }, nivel: 'baixo', descricao: 'Já tinha começado a alagar de manhã cedo.', minutosAtras: 320 },
+  { id: 'demo-56', lat: -8.1190, lng: -34.9260, bairro: { nome: 'Ipsep' }, user: { nome: 'Marcelo X.' }, nivel: 'medio', descricao: 'Av. Mascarenhas com poças desde cedo.', minutosAtras: 355 },
+  { id: 'demo-57', lat: -8.0095, lng: -34.9500, bairro: { nome: 'Apipucos' }, user: { nome: 'Nathalia E.' }, nivel: 'medio', descricao: 'Açude começou a transbordar na manhã.', minutosAtras: 390 },
+  { id: 'demo-58', lat: -8.0810, lng: -34.9325, bairro: { nome: 'San Martin' }, user: { nome: 'Otto J.' }, nivel: 'baixo', descricao: 'Ruas internas com água acumulando.', minutosAtras: 425 },
+  { id: 'demo-59', lat: -8.0710, lng: -34.9495, bairro: { nome: 'Curado' }, user: { nome: 'Patrícia W.' }, nivel: 'medio', descricao: 'Conjunto Curado com várias ruas tomadas.', minutosAtras: 470 },
+  { id: 'demo-60', lat: -8.0735, lng: -34.9490, bairro: { nome: 'Jardim São Paulo' }, user: { nome: 'Rodrigo I.' }, nivel: 'medio', descricao: 'BR-101 com lentidão por causa da água.', minutosAtras: 510 },
+  { id: 'demo-61', lat: -8.0285, lng: -34.9385, bairro: { nome: 'Macaxeira' }, user: { nome: 'Sara B.' }, nivel: 'baixo', descricao: 'Começo de chuva forte por aqui.', minutosAtras: 545 },
+  { id: 'demo-62', lat: -8.1330, lng: -34.9255, bairro: { nome: 'Boa Viagem' }, user: { nome: 'Thiago L.' }, nivel: 'baixo', descricao: 'Rua dos Navegantes com poças, sem alagamento sério.', minutosAtras: 585 },
+
+  // 10-18h — madrugada / dia anterior
+  { id: 'demo-63', lat: -8.0810, lng: -34.9215, bairro: { nome: 'Afogados' }, user: { nome: 'Ulisses N.' }, nivel: 'baixo', descricao: 'Choveu forte na madrugada, ruas começando a acumular.', minutosAtras: 680 },
+  { id: 'demo-64', lat: -8.1090, lng: -34.9065, bairro: { nome: 'Boa Viagem' }, user: { nome: 'Vanessa O.' }, nivel: 'baixo', descricao: 'Setúbal com poças desde a madrugada.', minutosAtras: 760 },
+  { id: 'demo-65', lat: -8.0445, lng: -34.9075, bairro: { nome: 'Madalena' }, user: { nome: 'Wesley F.' }, nivel: 'baixo', descricao: 'Rua da Hora com bolsões pequenos durante a noite.', minutosAtras: 850 },
+  { id: 'demo-66', lat: -8.0250, lng: -34.9105, bairro: { nome: 'Casa Amarela' }, user: { nome: 'Yasmin G.' }, nivel: 'baixo', descricao: 'Bueiros entupidos formando poça desde a madrugada.', minutosAtras: 1080 },
 ]
 
 function gerarRelatos() {
