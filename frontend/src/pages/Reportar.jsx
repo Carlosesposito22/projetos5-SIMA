@@ -26,7 +26,7 @@ export function Reportar() {
   // Lat/lng nunca aparecem em input pro usuário; só vão pro backend.
   const [localizacao, setLocalizacao] = useState(null) // { lat, lng, endereco, fonte }
 
-  const [bairroId, setBairroId] = useState(user?.bairro?.id || null)
+  const [bairroId, setBairroId] = useState(null)
   const [nivel, setNivel] = useState('')
   const [descricao, setDescricao] = useState('')
   const [imagem, setImagem] = useState(null)
@@ -43,7 +43,8 @@ export function Reportar() {
 
   const aplicarLocalizacao = ({ lat, lng, endereco, bairroSugerido, fonte }) => {
     setLocalizacao({ lat, lng, endereco, fonte })
-    if (bairroSugerido && !bairroId) {
+    setBairroId(null)
+    if (bairroSugerido) {
       const slugAlvo = normalizarParaSlug(bairroSugerido)
       const match = bairros.find((b) => b.slug === slugAlvo)
       if (match) setBairroId(match.id)
