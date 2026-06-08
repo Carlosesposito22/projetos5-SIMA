@@ -7,31 +7,34 @@ Suporta dois provedores (configurável em settings.SIMA_WA_PROVIDER):
   - 'twilio'   → Twilio WhatsApp Sandbox / número aprovado
   - 'meta'     → Meta Cloud API (número próprio, produção)
 
-Webhook de entrada (GET /api/alertas/whatsapp/webhook/):
-  Verificação do desafio Meta (mode=subscribe).
+Twilio Sandbox — templates disponíveis (business-initiated):
+  O Sandbox do Twilio exige o uso de Content Templates para iniciar
+  conversas. O template usado é o "appointment_reminder" pré-aprovado:
 
-Webhook de entrada (POST /api/alertas/whatsapp/webhook/):
-  Processa mensagens recebidas dos usuários.
-  Por ora apenas responde com o link do mapa (MVP).
-  Expandir aqui para: opt-in, opt-out, consulta de alertas.
+    "Your appointment is coming up on {{1}} at {{2}}."
 
-Envio proativo:
-  Chamado por services._enviar_whatsapp() quando um relato é criado.
-  
+  Mapeamento para alertas SIMA:
+    {{1}} → nível do alerta  (ex: "Crítico em Boa Viagem")
+    {{2}} → link do mapa     (ex: "http://localhost:5173")
+
+  Após o usuário responder qualquer mensagem, o sistema pode enviar
+  texto livre por 24h (session message).
+
 ── Como configurar (settings.py) ──────────────────────────────────────────
 
 Para Twilio:
-  SIMA_WA_PROVIDER = 'twilio'
+  SIMA_WA_PROVIDER   = 'twilio'
   TWILIO_ACCOUNT_SID = 'ACxxx'
   TWILIO_AUTH_TOKEN  = 'xxx'
   TWILIO_WA_FROM     = 'whatsapp:+14155238886'
+  TWILIO_WA_TEMPLATE_SID = 'HXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'  # opcional
 
 Para Meta:
   SIMA_WA_PROVIDER      = 'meta'
-  META_WA_TOKEN         = 'EAAxxxxx'          # token permanente da página
-  META_WA_PHONE_ID      = '1234567890'        # Phone number ID
-  META_WA_VERIFY_TOKEN  = 'seu-token-secreto' # qualquer string, definida por você
-  META_WA_TEMPLATE_NAME = 'alerta_alagamento' # template aprovado pela Meta
+  META_WA_TOKEN         = 'EAAxxxxx'
+  META_WA_PHONE_ID      = '1234567890'
+  META_WA_VERIFY_TOKEN  = 'seu-token-secreto'
+  META_WA_TEMPLATE_NAME = 'alerta_alagamento'
 
 ────────────────────────────────────────────────────────────────────────────
 """
@@ -49,20 +52,33 @@ from django.utils.decorators import method_decorator
 
 logger = logging.getLogger(__name__)
 
-APP_URL = getattr(settings, 'SIMA_APP_URL', 'https://sima.recife.br')
+APP_URL = getattr(settings, 'SIMA_APP_URL', 'http://localhost:5173')
 
 
 # ── Envio proativo (chamado por services.py) ───────────────────────────────
 
-def enviar_mensagem_wa(telefone: str, texto: str) -> dict:
+def enviar_mensagem_wa(
+    telefone: str,
+    texto: str,
+    nivel_bairro: str = None,
+    nivel: str = None,
+    bairro: str = None,
+    endereco: str = None,
+    descricao: str = None,
+) -> dict:
     """
     Envia uma mensagem WhatsApp pelo provedor configurado.
-    Retorna o payload de resposta da API.
+
+    Parâmetros:
+      telefone    — número no formato E.164 (+5581999434582)
+      texto       — mensagem completa (usada como fallback / sessão aberta)
+      nivel_bairro — string resumida para o {{1}} do template Twilio
+                     ex: "Crítico em Boa Viagem"
     """
     provider = getattr(settings, 'SIMA_WA_PROVIDER', None)
 
     if provider == 'twilio':
-        return _enviar_twilio(telefone, texto)
+        return _enviar_twilio(telefone, texto, nivel_bairro, nivel=nivel, bairro=bairro, endereco=endereco, descricao=descricao)
     elif provider == 'meta':
         return _enviar_meta(telefone, texto)
     else:
@@ -72,18 +88,54 @@ def enviar_mensagem_wa(telefone: str, texto: str) -> dict:
         )
 
 
-def _enviar_twilio(telefone: str, texto: str) -> dict:
+def _enviar_twilio(telefone: str, texto: str, nivel_bairro: str = None, *, nivel: str = None, bairro: str = None, endereco: str = None, descricao: str = None) -> dict:
+    """
+    Envia via Twilio.
+
+    Estratégia:
+      1. Se TWILIO_WA_TEMPLATE_SID estiver configurado → usa Content Template
+         (funciona para business-initiated, sem precisar que o usuário responda).
+      2. Caso contrário → tenta mensagem livre (só funciona se o usuário
+         já iniciou conversa nas últimas 24h).
+    """
     try:
         from twilio.rest import Client
     except ImportError:
         raise RuntimeError('Instale o pacote twilio: pip install twilio')
 
-    client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-    msg = client.messages.create(
-        from_=settings.TWILIO_WA_FROM,
-        to=f'whatsapp:{telefone}',
-        body=texto,
-    )
+    client       = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+    from_number  = settings.TWILIO_WA_FROM
+    to_number    = f'whatsapp:{telefone}'
+    template_sid = getattr(settings, 'TWILIO_WA_TEMPLATE_SID', None)
+
+    if template_sid:
+        # ── Content Template (business-initiated) ─────────────────────────
+        # Template "Appointment Reminder":
+        #   "Your appointment is coming up on {{1}} at {{2}}."
+        # Reutilizamos os slots:
+        #   {{1}} → nível + bairro  ex: "Crítico em Boa Viagem"
+        #   {{2}} → link do mapa
+        msg = client.messages.create(
+            from_=from_number,
+            to=to_number,
+            content_sid=template_sid,
+            content_variables=json.dumps({
+                'nivel':     nivel or nivel_bairro or 'Alerta',
+                'bairro':    bairro or '',
+                'endereco':  endereco or '',
+                'descrição': descricao or '',
+                'url':       APP_URL,
+            }),
+        )
+    else:
+        # ── Mensagem livre (session message) ─────────────────────────────
+        # Só funciona se o usuário respondeu nas últimas 24h.
+        msg = client.messages.create(
+            from_=from_number,
+            to=to_number,
+            body=texto,
+        )
+
     return {'sid': msg.sid, 'status': msg.status}
 
 
@@ -92,10 +144,6 @@ def _enviar_meta(telefone: str, texto: str) -> dict:
 
     phone_id = settings.META_WA_PHONE_ID
     token    = settings.META_WA_TOKEN
-
-    # Usa template aprovado se disponível; caso contrário mensagem livre
-    # (mensagens livres só funcionam dentro de 24h de uma conversa iniciada
-    # pelo usuário — templates funcionam a qualquer hora)
     template = getattr(settings, 'META_WA_TEMPLATE_NAME', None)
 
     if template:
@@ -142,7 +190,6 @@ class WhatsAppWebhookView(View):
     POST /api/alertas/whatsapp/webhook/ — mensagens recebidas
     """
 
-    # ── GET: desafio de verificação Meta ──────────────────────────────────
     def get(self, request):
         mode      = request.GET.get('hub.mode')
         token     = request.GET.get('hub.verify_token')
@@ -157,9 +204,7 @@ class WhatsAppWebhookView(View):
         logger.warning('Falha na verificação do webhook WhatsApp.')
         return HttpResponse('Forbidden', status=403)
 
-    # ── POST: processar mensagem recebida ─────────────────────────────────
     def post(self, request):
-        # Verificar assinatura HMAC (Meta envia X-Hub-Signature-256)
         if not self._assinatura_valida(request):
             return HttpResponse('Unauthorized', status=401)
 
@@ -168,7 +213,6 @@ class WhatsAppWebhookView(View):
         except json.JSONDecodeError:
             return HttpResponse('Bad Request', status=400)
 
-        # Extrair mensagens (estrutura padrão Meta Cloud API)
         try:
             entry    = body['entry'][0]
             changes  = entry['changes'][0]
@@ -187,13 +231,13 @@ class WhatsAppWebhookView(View):
     def _assinatura_valida(self, request) -> bool:
         secret = getattr(settings, 'META_WA_APP_SECRET', None)
         if not secret:
-            return True   # sem secret configurado, skip em desenvolvimento
+            return True  # sem secret configurado, skip em desenvolvimento
 
         sig_header = request.headers.get('X-Hub-Signature-256', '')
         if not sig_header.startswith('sha256='):
             return False
 
-        expected = hmac.new(
+        expected = hmac.HMAC(
             secret.encode(),
             request.body,
             hashlib.sha256,
@@ -202,15 +246,6 @@ class WhatsAppWebhookView(View):
         return hmac.compare_digest(sig_header[7:], expected)
 
     def _processar_mensagem(self, msg: dict, value: dict):
-        """
-        Processa uma mensagem recebida de um usuário via WhatsApp.
-
-        MVP: qualquer mensagem recebe o link do mapa.
-        Próximos passos:
-          - "PARAR" → desativa alertas do usuário (opt-out)
-          - "OK"    → confirma o relato mais recente do bairro
-          - Integrar com sistema de opt-in (cadastro pelo WA)
-        """
         from_number = msg.get('from', '')
         msg_type    = msg.get('type', '')
 

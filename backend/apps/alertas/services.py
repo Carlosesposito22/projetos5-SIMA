@@ -29,7 +29,6 @@ Anti-spam:
 import logging
 import math
 from dataclasses import dataclass
-from typing import Literal
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -42,13 +41,14 @@ logger = logging.getLogger(__name__)
 User   = get_user_model()
 
 # ── Configuração ───────────────────────────────────────────────────────────
+# Valores padrão — podem ser sobrescritos em settings.py via SIMA_ALERTAS = {...}
 
 _DEFAULTS = {
-    'RAIO_BAIXO_M':  300,
-    'RAIO_MEDIO_M':  600,
+    'RAIO_BAIXO_M': 300,
+    'RAIO_MEDIO_M': 600,
     'RAIO_ALTO_M':  1200,
     'EMAIL_FROM':   'alertas@sima.recife.br',
-    'WA_ENABLED':   False,   # True quando Twilio/360dialog estiver configurado
+    'WA_ENABLED':   True,
 }
 
 def cfg(key):
@@ -58,7 +58,7 @@ def cfg(key):
 
 def _haversine_m(lat1, lng1, lat2, lng2) -> float:
     """Distância em metros entre dois pontos geográficos (fórmula de Haversine)."""
-    R = 6_371_000  # raio médio da Terra em metros
+    R = 6_371_000
     φ1, φ2 = math.radians(lat1), math.radians(lat2)
     Δφ = math.radians(lat2 - lat1)
     Δλ = math.radians(lng2 - lng1)
@@ -76,7 +76,7 @@ def _raio_para_nivel(nivel: str) -> float:
 
 def _usuarios_no_raio(relato):
     """
-    Retorna queryset de usuários elegíveis para receber alerta do relato.
+    Retorna lista de usuários elegíveis para receber alerta do relato.
 
     Estratégia em cascata:
     1. Usuários com lat/lng dentro do raio (precisão máxima).
@@ -86,7 +86,6 @@ def _usuarios_no_raio(relato):
     raio = _raio_para_nivel(relato.nivel)
     rlat, rlng = float(relato.lat), float(relato.lng)
 
-    # Caixa de busca aproximada (pre-filter no banco antes do Haversine)
     grau_lat = raio / 111_000
     grau_lng = raio / (111_000 * math.cos(math.radians(rlat)))
 
@@ -102,13 +101,11 @@ def _usuarios_no_raio(relato):
         .exclude(pk=relato.user_id)
     )
 
-    # Filtro Haversine preciso
     elegíveis_geo = [
         u for u in candidatos_geo
         if _haversine_m(rlat, rlng, float(u.lat), float(u.lng)) <= raio
     ]
 
-    # Fallback por bairro (apenas quem não tem coordenadas)
     elegíveis_bairro = []
     if relato.bairro_id:
         elegíveis_bairro = list(
@@ -124,12 +121,25 @@ def _usuarios_no_raio(relato):
     seen = {u.pk for u in elegíveis_geo}
     return elegíveis_geo + [u for u in elegíveis_bairro if u.pk not in seen]
 
+# ── Helpers ────────────────────────────────────────────────────────────────
+
+def _formatar_telefone(telefone: str) -> str:
+    """
+    Normaliza para E.164 (+5581999434582).
+    Remove espaços, traços e parênteses; adiciona +55 se não tiver código de país.
+    """
+    tel = ''.join(c for c in telefone.strip() if c.isdigit() or c == '+')
+    if not tel.startswith('+'):
+        tel = '+55' + tel
+    return tel
+
 # ── Adaptadores de canal ───────────────────────────────────────────────────
 
 @dataclass
 class ResultadoEnvio:
     sucesso: bool
     detalhe: str = ''
+
 
 def _enviar_email(usuario, relato) -> ResultadoEnvio:
     """Envia email de alerta. Usa template HTML se disponível."""
@@ -140,18 +150,17 @@ def _enviar_email(usuario, relato) -> ResultadoEnvio:
     }.get(relato.nivel, relato.nivel.capitalize())
 
     bairro_nome = relato.bairro.nome if relato.bairro else 'Recife'
-
-    assunto = f'[SIMA] {nivel_display} de alagamento em {bairro_nome}'
+    app_url     = getattr(settings, 'SIMA_APP_URL', 'http://localhost:5173')
+    assunto     = f'[SIMA] {nivel_display} de alagamento em {bairro_nome}'
 
     contexto = {
         'usuario':       usuario,
         'relato':        relato,
         'nivel_display': nivel_display,
         'bairro_nome':   bairro_nome,
-        'app_url':       getattr(settings, 'SIMA_APP_URL', 'https://sima.recife.br'),
+        'app_url':       app_url,
     }
 
-    # Tenta renderizar template HTML; usa texto plano como fallback
     try:
         corpo_html = render_to_string('alertas/email_alerta.html', contexto)
     except Exception:
@@ -160,7 +169,8 @@ def _enviar_email(usuario, relato) -> ResultadoEnvio:
     corpo_txt = (
         f'Olá, {usuario.nome}!\n\n'
         f'Um alagamento nível {nivel_display} foi reportado em {bairro_nome}.\n'
-        f'Acesse o mapa para mais detalhes: {contexto["app_url"]}\n\n'
+        + (f'Endereço: {relato.endereco}\n' if relato.endereco else '')
+        + f'Acesse o mapa para mais detalhes: {app_url}\n\n'
         f'— Equipe SIMA'
     )
 
@@ -180,10 +190,8 @@ def _enviar_email(usuario, relato) -> ResultadoEnvio:
 
 def _enviar_whatsapp(usuario, relato) -> ResultadoEnvio:
     """
-    Adaptador WhatsApp — US05.
-
-    Plugue aqui a integração com Twilio, 360dialog ou Meta Cloud API.
-    Por enquanto retorna erro controlado se WA_ENABLED=False.
+    Envia alerta via WhatsApp usando o telefone cadastrado no banco (User.telefone).
+    Formata automaticamente para E.164 antes de enviar.
     """
     if not cfg('WA_ENABLED'):
         return ResultadoEnvio(sucesso=False, detalhe='WhatsApp não configurado.')
@@ -193,21 +201,33 @@ def _enviar_whatsapp(usuario, relato) -> ResultadoEnvio:
 
     from .whatsapp import enviar_mensagem_wa
 
+    telefone = _formatar_telefone(usuario.telefone)
+
     nivel_display = {'baixo': 'Atenção', 'medio': 'Alerta', 'alto': 'Crítico'}.get(
         relato.nivel, relato.nivel.capitalize()
     )
     bairro_nome = relato.bairro.nome if relato.bairro else 'Recife'
-    app_url = getattr(settings, 'SIMA_APP_URL', 'https://sima.recife.br')
+    app_url     = getattr(settings, 'SIMA_APP_URL', 'http://localhost:5173')
 
+    endereco_linha = f'📍 {relato.endereco}\n' if relato.endereco else ''
     texto = (
         f'🌊 *SIMA — {nivel_display} em {bairro_nome}*\n'
         f'Alagamento reportado próximo a você.\n'
+        f'{endereco_linha}'
         f'Veja no mapa: {app_url}\n\n'
         f'Responda *PARAR* para cancelar alertas.'
     )
 
     try:
-        resultado_api = enviar_mensagem_wa(usuario.telefone, texto)
+        resultado_api = enviar_mensagem_wa(
+            telefone,
+            texto,
+            nivel_bairro=f'{nivel_display} em {bairro_nome}',
+            nivel=nivel_display,
+            bairro=bairro_nome,
+            endereco=getattr(relato, 'endereco', ''),
+            descricao=relato.descricao or '',
+        )
         return ResultadoEnvio(sucesso=True, detalhe=str(resultado_api))
     except Exception as exc:
         return ResultadoEnvio(sucesso=False, detalhe=str(exc))
@@ -226,7 +246,7 @@ def relato_criado(relato) -> int:
         logger.info('Relato #%s — nenhum usuário no raio.', relato.pk)
         return 0
 
-    enviados = 0
+    enviados   = 0
     wa_enabled = cfg('WA_ENABLED')
 
     for usuario in usuarios:
@@ -235,7 +255,6 @@ def relato_criado(relato) -> int:
             canais.append(Alerta.Canal.WHATSAPP)
 
         for canal in canais:
-            # unique_together impede duplicata; ignora silenciosamente
             alerta, criado = Alerta.objects.get_or_create(
                 relato=relato,
                 usuario=usuario,
@@ -243,7 +262,7 @@ def relato_criado(relato) -> int:
                 defaults={'status': Alerta.Status.PENDENTE},
             )
             if not criado:
-                continue  # já notificado
+                continue
 
             if canal == Alerta.Canal.EMAIL:
                 resultado = _enviar_email(usuario, relato)

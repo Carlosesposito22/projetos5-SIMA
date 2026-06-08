@@ -155,6 +155,7 @@ export function Reportar() {
       const formData = new FormData()
       formData.append('lat', localizacao.lat.toFixed(6))
       formData.append('lng', localizacao.lng.toFixed(6))
+      formData.append('endereco', localizacao.endereco || '')
       if (bairroId) formData.append('bairro', bairroId)
       formData.append('nivel', nivel)
       formData.append('descricao', descricao.trim())

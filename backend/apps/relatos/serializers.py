@@ -35,7 +35,7 @@ class RelatoSerializer(serializers.ModelSerializer):
         model = Relato
         fields = [
             'id', 'user', 'lat', 'lng', 'bairro',
-            'nivel', 'descricao', 'imagem', 'created_at',
+            'nivel', 'endereco', 'descricao', 'imagem', 'created_at',
             'total_denuncias', 'ja_denunciou',
             'total_confirmacoes', 'ja_confirmou',  # ← novo
         ]
@@ -50,7 +50,7 @@ class RelatoCreateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Relato
-        fields = ['lat', 'lng', 'bairro', 'nivel', 'descricao', 'imagem']
+        fields = ['lat', 'lng', 'bairro', 'nivel', 'endereco', 'descricao', 'imagem']
 
     def validate_lat(self, value):
         if not -90 <= value <= 90:
@@ -64,4 +64,3 @@ class RelatoCreateSerializer(serializers.ModelSerializer):
 
     def validate_descricao(self, value):
         return value.strip()
-    

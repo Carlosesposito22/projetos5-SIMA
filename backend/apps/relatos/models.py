@@ -25,6 +25,7 @@ class Relato(models.Model):
         related_name='relatos',
     )
     nivel = models.CharField(max_length=10, choices=Nivel.choices)
+    endereco = models.CharField(max_length=512, blank=True, default='')
     descricao = models.TextField(max_length=500, blank=True)
     imagem = models.ImageField(upload_to='relatos/', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

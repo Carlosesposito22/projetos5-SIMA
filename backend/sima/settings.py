@@ -10,7 +10,7 @@ from pathlib import Path
 
 import environ
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR  = Path(__file__).resolve().parent.parent
 REPO_ROOT = BASE_DIR.parent
 
 env = environ.Env(
@@ -23,6 +23,34 @@ SECRET_KEY = env('DJANGO_SECRET_KEY', default='django-insecure-change-me-in-prod
 DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+
+# ── WhatsApp / Alertas ────────────────────────────────────────────────────
+
+SIMA_WA_PROVIDER       = env('SIMA_WA_PROVIDER',       default='twilio')
+
+TWILIO_ACCOUNT_SID     = env('TWILIO_ACCOUNT_SID',     default='')
+TWILIO_AUTH_TOKEN      = env('TWILIO_AUTH_TOKEN',       default='')
+TWILIO_WA_FROM         = env('TWILIO_WA_FROM',         default='whatsapp:+14155238886')
+TWILIO_WA_TEMPLATE_SID = env('TWILIO_WA_TEMPLATE_SID', default='')
+
+META_WA_TOKEN         = env('META_WA_TOKEN',         default='')
+META_WA_PHONE_ID      = env('META_WA_PHONE_ID',      default='')
+META_WA_VERIFY_TOKEN  = env('META_WA_VERIFY_TOKEN',  default='')
+META_WA_TEMPLATE_NAME = env('META_WA_TEMPLATE_NAME', default='alerta_alagamento')
+META_WA_APP_SECRET    = env('META_WA_APP_SECRET',    default='')
+
+SIMA_APP_URL = env('SIMA_APP_URL', default='http://localhost:5173')
+
+SIMA_ALERTAS = {
+    'RAIO_BAIXO_M': 300,
+    'RAIO_MEDIO_M': 600,
+    'RAIO_ALTO_M':  1200,
+    'EMAIL_FROM':   'alertas@sima.recife.br',
+    # Ativa WhatsApp automaticamente se o provedor e credenciais estiverem no .env
+    'WA_ENABLED': bool(SIMA_WA_PROVIDER and (TWILIO_ACCOUNT_SID or META_WA_TOKEN)),
+}
+
+# ── Apps ──────────────────────────────────────────────────────────────────
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -43,6 +71,8 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = 'users.User'
+
+# ── Middleware ────────────────────────────────────────────────────────────
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -74,12 +104,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sima.wsgi.application'
 
+# ── Banco de dados ────────────────────────────────────────────────────────
+
 DATABASES = {
     'default': env.db_url(
         'DATABASE_URL',
         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
     ),
 }
+
+# ── Senhas ────────────────────────────────────────────────────────────────
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -88,16 +122,22 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# ── Internacionalização ───────────────────────────────────────────────────
+
 LANGUAGE_CODE = 'pt-br'
-TIME_ZONE = 'America/Recife'
-USE_I18N = True
-USE_TZ = True
+TIME_ZONE     = 'America/Recife'
+USE_I18N      = True
+USE_TZ        = True
+
+# ── Arquivos estáticos e de mídia ─────────────────────────────────────────
 
 STATIC_URL = 'static/'
-MEDIA_URL = 'media/'
+MEDIA_URL  = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ── DRF ──────────────────────────────────────────────────────────────────
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -111,25 +151,31 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
+# ── JWT ───────────────────────────────────────────────────────────────────
+
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME':  timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
+    'ROTATE_REFRESH_TOKENS':  True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
 }
 
+# ── CORS ──────────────────────────────────────────────────────────────────
+
 CORS_ALLOWED_ORIGINS = env.list(
     'CORS_ALLOWED_ORIGINS',
     default=['http://localhost:5173', 'http://127.0.0.1:5173'],
 )
 
+# ── APIs externas ─────────────────────────────────────────────────────────
 
 OPENWEATHER_API_KEY = env('OPENWEATHER_API_KEY', default='')
-TOMORROW_API_KEY = env('TOMORROW_API_KEY', default='')
+TOMORROW_API_KEY    = env('TOMORROW_API_KEY',    default='')
 
-WHATSAPP_CLOUD_TOKEN = env('WHATSAPP_CLOUD_TOKEN', default='')
-WHATSAPP_PHONE_NUMBER_ID = env('WHATSAPP_PHONE_NUMBER_ID', default='')
-WHATSAPP_VERIFY_TOKEN = env('WHATSAPP_VERIFY_TOKEN', default='')
+# ── Email ─────────────────────────────────────────────────────────────────
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
