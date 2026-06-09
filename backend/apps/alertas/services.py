@@ -132,13 +132,19 @@ def _usuarios_no_raio(relato):
 
 def _formatar_telefone(telefone: str) -> str:
     """
-    Normaliza para E.164 (+5581999434582).
-    Remove espaços, traços e parênteses; adiciona +55 se não tiver código de país.
+    Normaliza para E.164 (+5581997282665).
+    O TelefoneInput salva com DDI 55 (ex: 5581997282665).
+    No Brasil, o WhatsApp registra números no formato de 8 dígitos (sem o
+    nono dígito). Números com 9 dígitos após o DDD têm o primeiro 9 removido.
     """
-    tel = ''.join(c for c in telefone.strip() if c.isdigit() or c == '+')
-    if not tel.startswith('+'):
-        tel = '+55' + tel
-    return tel
+    digits = ''.join(c for c in telefone.strip() if c.isdigit())
+    if not digits.startswith('55'):
+        digits = '55' + digits
+    ddd    = digits[2:4]
+    numero = digits[4:]
+    if len(numero) == 9 and numero.startswith('9'):
+        numero = numero[1:]
+    return f'+55{ddd}{numero}'
 
 # ── Adaptadores de canal ───────────────────────────────────────────────────
 
