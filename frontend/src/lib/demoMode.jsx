@@ -306,6 +306,17 @@ function gerarRelatos() {
   }))
 }
 
+// Sensores demo — pontos de monitoramento espalhados pelas áreas de risco
+// mais conhecidas do Recife. Visualmente são círculos índigo discretos no mapa.
+const SENSORES_FAKE = [
+  { id: 'sensor-demo-1', nome: 'Pluviômetro Canal Capibaribe — Várzea',    tipo: 'pluviometro',  tipo_display: 'Pluviômetro',    lat: -8.0395, lng: -34.9505, bairro_nome: 'Várzea',      ativo: true,  descricao: 'Monitoramento do nível do Capibaribe.' },
+  { id: 'sensor-demo-2', nome: 'Régua de Nível — Afogados',                 tipo: 'regua_nivel',  tipo_display: 'Régua de Nível', lat: -8.0810, lng: -34.9215, bairro_nome: 'Afogados',    ativo: true,  descricao: 'Canal do Arruda próximo à Av. Recife.' },
+  { id: 'sensor-demo-3', nome: 'Câmera Av. Cons. Aguiar — Boa Viagem',      tipo: 'camera',       tipo_display: 'Câmera',         lat: -8.1130, lng: -34.9015, bairro_nome: 'Boa Viagem',  ativo: true,  descricao: 'Ponto de monitoramento visual da avenida.' },
+  { id: 'sensor-demo-4', nome: 'IoT Canal Beberibe — Encruzilhada',         tipo: 'iot_generico', tipo_display: 'IoT Genérico',   lat: -8.0395, lng: -34.8895, bairro_nome: 'Encruzilhada', ativo: true,  descricao: 'Sensor de nível e turbidez.' },
+  { id: 'sensor-demo-5', nome: 'Pluviômetro Ibura — UR-1',                  tipo: 'pluviometro',  tipo_display: 'Pluviômetro',    lat: -8.1325, lng: -34.9445, bairro_nome: 'Ibura',        ativo: true,  descricao: 'Área de risco históricamente afetada.' },
+  { id: 'sensor-demo-6', nome: 'Régua de Nível Açude Apipucos',             tipo: 'regua_nivel',  tipo_display: 'Régua de Nível', lat: -8.0125, lng: -34.9510, bairro_nome: 'Apipucos',     ativo: false, descricao: 'Em manutenção.' },
+]
+
 export function useDemoMode() {
   const [ativo, setAtivo] = useState(ativoGlobal)
 
@@ -320,8 +331,9 @@ export function useDemoMode() {
     }
   }, [])
 
-  const relatosFalsos = ativo ? gerarRelatos() : []
-  return { ativo, relatosFalsos }
+  const relatosFalsos  = ativo ? gerarRelatos()  : []
+  const sensoresFalsos = ativo ? SENSORES_FAKE   : []
+  return { ativo, relatosFalsos, sensoresFalsos }
 }
 
 // Banner agora se autogerencia — basta colocar <BannerDemo /> em qualquer

@@ -112,7 +112,7 @@ export function Dashboard() {
   // DEMO-MODE — quando ativo, mistura relatos fictícios e recalcula o resumo
   // localmente pra manter mapa/tabela/KPIs/bairros críticos consistentes
   // (o backend não conhece os relatos fake).
-  const { ativo: demoAtivo, relatosFalsos } = useDemoMode()
+  const { ativo: demoAtivo, relatosFalsos, sensoresFalsos } = useDemoMode()
   const relatosFakeFiltrados = (() => {
     if (!demoAtivo) return []
     let fake = relatosFalsos
@@ -123,7 +123,8 @@ export function Dashboard() {
     }
     return fake
   })()
-  const relatosExibidos = demoAtivo ? [...relatos, ...relatosFakeFiltrados] : relatos
+  const relatosExibidos  = demoAtivo ? [...relatos,  ...relatosFakeFiltrados]  : relatos
+  const sensoresExibidos = demoAtivo ? [...sensores, ...sensoresFalsos] : sensores
   const resumoExibido = demoAtivo ? gerarResumoLocal(relatosExibidos) : resumo
   // FIM DEMO-MODE
 
@@ -233,7 +234,7 @@ export function Dashboard() {
 
       <section className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4 sm:gap-6">
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden h-[450px] sm:h-[520px] relative">
-          <MapaRecife relatos={relatosExibidos} sensores={sensores} />
+          <MapaRecife relatos={relatosExibidos} sensores={sensoresExibidos} />
           <LegendaNiveis />
         </div>
         <BairrosCriticos bairros={resumoExibido?.por_bairro ?? []} />

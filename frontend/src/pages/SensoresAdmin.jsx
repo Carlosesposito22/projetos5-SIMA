@@ -2,39 +2,40 @@
  * Gestão de sensores IoT — US09.
  * Acessível apenas para usuários com role=admin via /dashboard/sensores.
  *
- * Funcionalidades:
- *  - Listagem de todos os sensores (ativos e inativos).
- *  - Cadastro de novo sensor (nome, tipo, bairro, lat/lng, descrição).
- *  - Edição inline (mesmo formulário, preenchido com dados do registro).
- *  - Ativar / Desativar toggle sem abrir o formulário.
- *  - Exclusão com confirmação.
+ * Localização do sensor é definida por GPS do navegador ou busca por CEP,
+ * nunca por inputs manuais de lat/lng (mesmo padrão de Reportar.jsx).
  */
 
 import { useEffect, useState } from 'react'
 
+import { BuscaCEP } from '../components/BuscaCEP'
 import { useBairros } from '../lib/bairros'
+import { reverseGeocode } from '../lib/geocoder'
 import { TIPOS_SENSOR, iconeSensor, sensores as sensoresService } from '../lib/sensores'
 
 const FORM_VAZIO = {
   nome:      '',
   tipo:      'iot_generico',
   descricao: '',
-  lat:       '',
-  lng:       '',
   bairro:    '',
   ativo:     true,
 }
 
 export function SensoresAdmin() {
-  const [lista, setLista]               = useState([])
-  const [carregando, setCarregando]     = useState(true)
-  const [erro, setErro]                 = useState(null)
-  const [form, setForm]                 = useState(FORM_VAZIO)
-  const [editandoId, setEditandoId]     = useState(null)
-  const [mostrarForm, setMostrarForm]   = useState(false)
-  const [salvando, setSalvando]         = useState(false)
-  const [erroForm, setErroForm]         = useState(null)
-  const [excluindoId, setExcluindoId]   = useState(null)
+  const [lista, setLista]             = useState([])
+  const [carregando, setCarregando]   = useState(true)
+  const [erro, setErro]               = useState(null)
+  const [form, setForm]               = useState(FORM_VAZIO)
+  const [localizacao, setLocalizacao] = useState(null) // { lat, lng, endereco, fonte }
+  const [editandoId, setEditandoId]   = useState(null)
+  const [mostrarForm, setMostrarForm] = useState(false)
+  const [salvando, setSalvando]       = useState(false)
+  const [erroForm, setErroForm]       = useState(null)
+  const [excluindoId, setExcluindoId] = useState(null)
+
+  const [modoLoc, setModoLoc]       = useState('gps')
+  const [obtendoGPS, setObtendoGPS] = useState(false)
+  const [avisoGPS, setAvisoGPS]     = useState(null)
 
   const { bairros } = useBairros()
 
@@ -52,44 +53,105 @@ export function SensoresAdmin() {
 
   useEffect(() => { carregar() }, [])
 
-  function abrirNovo() {
+  // ── GPS ──────────────────────────────────────────────────────────────────
+
+  const handleUsarGPS = () => {
+    setAvisoGPS(null)
+    if (!('geolocation' in navigator)) {
+      setAvisoGPS('Seu navegador não suporta geolocalização.')
+      return
+    }
+    setObtendoGPS(true)
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        try {
+          const { displayName } = await reverseGeocode(lat, lng)
+          setLocalizacao({ lat, lng, endereco: displayName, fonte: 'gps' })
+        } catch {
+          setLocalizacao({ lat, lng, endereco: 'Localização capturada pelo GPS', fonte: 'gps' })
+        } finally {
+          setObtendoGPS(false)
+        }
+      },
+      (err) => {
+        setObtendoGPS(false)
+        setAvisoGPS(
+          err.code === err.PERMISSION_DENIED
+            ? 'Permissão de localização negada.'
+            : 'Não foi possível obter sua localização agora.',
+        )
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+    )
+  }
+
+  const handleLocalizadoPorCEP = ({ lat, lng, displayName }) => {
+    setLocalizacao({ lat, lng, endereco: displayName, fonte: 'cep' })
+  }
+
+  // ── Abrir / fechar formulário ─────────────────────────────────────────────
+
+  const resetForm = () => {
     setForm(FORM_VAZIO)
+    setLocalizacao(null)
     setEditandoId(null)
     setErroForm(null)
+    setModoLoc('gps')
+    setAvisoGPS(null)
+  }
+
+  const abrirNovo = () => {
+    resetForm()
     setMostrarForm(true)
   }
 
-  function abrirEdicao(sensor) {
+  const abrirEdicao = (sensor) => {
     setForm({
       nome:      sensor.nome,
       tipo:      sensor.tipo,
       descricao: sensor.descricao || '',
-      lat:       String(sensor.lat),
-      lng:       String(sensor.lng),
       bairro:    sensor.bairro ?? '',
       ativo:     sensor.ativo,
     })
+    // Pré-preenche localização com o que está salvo — o admin pode trocar se quiser.
+    setLocalizacao({
+      lat:      parseFloat(sensor.lat),
+      lng:      parseFloat(sensor.lng),
+      endereco: sensor.bairro_nome
+        ? `${sensor.bairro_nome} (localização salva)`
+        : `${Number(sensor.lat).toFixed(5)}, ${Number(sensor.lng).toFixed(5)}`,
+      fonte: 'salvo',
+    })
     setEditandoId(sensor.id)
     setErroForm(null)
+    setModoLoc('gps')
+    setAvisoGPS(null)
     setMostrarForm(true)
   }
 
-  function cancelar() {
+  const cancelar = () => {
     setMostrarForm(false)
-    setEditandoId(null)
-    setErroForm(null)
+    resetForm()
   }
 
-  async function salvar(e) {
+  // ── Salvar ────────────────────────────────────────────────────────────────
+
+  const salvar = async (e) => {
     e.preventDefault()
+    if (!localizacao) {
+      setErroForm('Defina a localização do sensor antes de salvar.')
+      return
+    }
     setErroForm(null)
     setSalvando(true)
     const payload = {
       nome:      form.nome.trim(),
       tipo:      form.tipo,
       descricao: form.descricao.trim(),
-      lat:       form.lat,
-      lng:       form.lng,
+      lat:       localizacao.lat.toFixed ? localizacao.lat.toFixed(6) : localizacao.lat,
+      lng:       localizacao.lng.toFixed ? localizacao.lng.toFixed(6) : localizacao.lng,
       bairro:    form.bairro || null,
       ativo:     form.ativo,
     }
@@ -109,7 +171,9 @@ export function SensoresAdmin() {
     }
   }
 
-  async function toggleAtivo(sensor) {
+  // ── Ações da tabela ───────────────────────────────────────────────────────
+
+  const toggleAtivo = async (sensor) => {
     try {
       await sensoresService.editar(sensor.id, { ativo: !sensor.ativo })
       setLista((prev) =>
@@ -120,7 +184,7 @@ export function SensoresAdmin() {
     }
   }
 
-  async function excluir(sensor) {
+  const excluir = async (sensor) => {
     if (!window.confirm(`Excluir sensor "${sensor.nome}"? Esta ação não pode ser desfeita.`)) return
     setExcluindoId(sensor.id)
     try {
@@ -132,6 +196,8 @@ export function SensoresAdmin() {
       setExcluindoId(null)
     }
   }
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="space-y-6">
@@ -158,6 +224,7 @@ export function SensoresAdmin() {
             {editandoId ? 'Editar sensor' : 'Cadastrar novo sensor'}
           </h2>
           <form onSubmit={salvar} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
             {/* Nome */}
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-slate-600 mb-1">
@@ -211,42 +278,94 @@ export function SensoresAdmin() {
               </select>
             </div>
 
-            {/* Latitude */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">
-                Latitude *
+            {/* Localização — GPS ou CEP */}
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-600 mb-2">
+                Localização *
               </label>
-              <input
-                type="number"
-                step="0.000001"
-                required
-                value={form.lat}
-                onChange={(e) => setForm((f) => ({ ...f, lat: e.target.value }))}
-                placeholder="-8.050000"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
 
-            {/* Longitude */}
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">
-                Longitude *
-              </label>
-              <input
-                type="number"
-                step="0.000001"
-                required
-                value={form.lng}
-                onChange={(e) => setForm((f) => ({ ...f, lng: e.target.value }))}
-                placeholder="-34.900000"
-                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              {/* Localização confirmada */}
+              {localizacao ? (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 flex items-start gap-2 text-sm">
+                  <span className="text-emerald-600 font-semibold mt-0.5">✓</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-emerald-900 font-medium">Localização definida</div>
+                    <div className="text-emerald-800 text-xs mt-0.5 truncate">
+                      {localizacao.endereco}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLocalizacao(null)}
+                    className="text-xs text-emerald-700 hover:text-emerald-900 underline shrink-0"
+                  >
+                    Trocar
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Seletor GPS / CEP */}
+                  <div className="inline-flex p-1 bg-slate-100 rounded-lg" role="tablist">
+                    {[
+                      { value: 'gps', rotulo: '📍 GPS' },
+                      { value: 'cep', rotulo: '🏠 CEP' },
+                    ].map((m) => (
+                      <button
+                        key={m.value}
+                        type="button"
+                        role="tab"
+                        aria-selected={modoLoc === m.value}
+                        onClick={() => { setModoLoc(m.value); setAvisoGPS(null) }}
+                        className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                          modoLoc === m.value
+                            ? 'bg-white text-slate-900 shadow-sm'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        {m.rotulo}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* GPS */}
+                  {modoLoc === 'gps' && (
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={handleUsarGPS}
+                        disabled={obtendoGPS}
+                        className="inline-flex items-center gap-2 px-4 py-2 border border-blue-200 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 disabled:opacity-50 transition text-sm font-medium"
+                      >
+                        {obtendoGPS ? 'Obtendo localização...' : '📍 Usar minha localização'}
+                      </button>
+                      {avisoGPS && (
+                        <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                          {avisoGPS}{' '}
+                          <button
+                            type="button"
+                            onClick={() => setModoLoc('cep')}
+                            className="underline font-medium"
+                          >
+                            Buscar por CEP
+                          </button>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* CEP */}
+                  {modoLoc === 'cep' && (
+                    <BuscaCEP onLocalizado={handleLocalizadoPorCEP} />
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Descrição */}
             <div className="sm:col-span-2">
               <label className="block text-xs font-semibold text-slate-600 mb-1">
-                Descrição
+                Descrição{' '}
+                <span className="font-normal text-slate-400">(opcional)</span>
               </label>
               <textarea
                 rows={2}
@@ -298,7 +417,7 @@ export function SensoresAdmin() {
         </div>
       )}
 
-      {/* Tabela */}
+      {/* Mensagem de erro geral */}
       {erro && (
         <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm">
           {erro}
@@ -330,7 +449,6 @@ export function SensoresAdmin() {
                 <th className="text-left px-4 py-3">Nome</th>
                 <th className="text-left px-4 py-3 hidden sm:table-cell">Tipo</th>
                 <th className="text-left px-4 py-3 hidden md:table-cell">Bairro</th>
-                <th className="text-left px-4 py-3 hidden lg:table-cell">Coordenadas</th>
                 <th className="text-center px-4 py-3">Status</th>
                 <th className="text-right px-4 py-3">Ações</th>
               </tr>
@@ -347,9 +465,6 @@ export function SensoresAdmin() {
                   </td>
                   <td className="px-4 py-3 text-slate-600 hidden md:table-cell">
                     {sensor.bairro_nome ?? '—'}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500 font-mono text-xs hidden lg:table-cell">
-                    {Number(sensor.lat).toFixed(4)}, {Number(sensor.lng).toFixed(4)}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <button

@@ -64,9 +64,10 @@ export function Mapa() {
     }
   }, [])
 
-  // DEMO-MODE — mistura relatos falsos quando o modo demo está ativo
-  const { ativo: demoAtivo, relatosFalsos } = useDemoMode()
-  const relatosExibidos = demoAtivo ? [...relatos, ...relatosFalsos] : relatos
+  // DEMO-MODE — mistura relatos e sensores falsos quando o modo demo está ativo
+  const { ativo: demoAtivo, relatosFalsos, sensoresFalsos } = useDemoMode()
+  const relatosExibidos  = demoAtivo ? [...relatos,  ...relatosFalsos]  : relatos
+  const sensoresExibidos = demoAtivo ? [...sensores, ...sensoresFalsos] : sensores
   // FIM DEMO-MODE
 
   const semRelatos = !carregandoInicial && relatosExibidos.length === 0
@@ -83,7 +84,7 @@ export function Mapa() {
       </header>
 
       <main className="flex-1 relative">
-        <MapaRecife relatos={relatosExibidos} sensores={sensores} />
+        <MapaRecife relatos={relatosExibidos} sensores={sensoresExibidos} />
 
         <LegendaNiveis />
 

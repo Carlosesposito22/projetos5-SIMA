@@ -10,6 +10,7 @@
  *  4. Marcadores clicáveis sobre as áreas (popup com detalhe do relato).
  */
 
+import { useState } from 'react'
 import { GeoJSON, MapContainer, TileLayer } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -37,8 +38,22 @@ const ESTILO_BAIRRO = {
 
 export function MapaRecife({ relatos, sensores = [] }) {
   const { geojson } = useBairrosGeoJSON()
+  const [sensoresVisiveis, setSensoresVisiveis] = useState(true)
 
   return (
+    <div className="relative w-full h-full">
+
+    {sensores.length > 0 && (
+      <button
+        onClick={() => setSensoresVisiveis((v) => !v)}
+        title={sensoresVisiveis ? 'Ocultar sensores do mapa' : 'Mostrar sensores no mapa'}
+        className="absolute top-2 right-2 z-[800] inline-flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition select-none"
+      >
+        <span className="text-sm leading-none">{sensoresVisiveis ? '📡' : '📡'}</span>
+        {sensoresVisiveis ? 'Ocultar sensores' : 'Mostrar sensores'}
+      </button>
+    )}
+
     <MapContainer
       center={CENTRO_RECIFE}
       zoom={ZOOM_INICIAL}
@@ -72,9 +87,11 @@ export function MapaRecife({ relatos, sensores = [] }) {
         <MarcadorRelato key={relato.id} relato={relato} />
       ))}
 
-      {sensores.map((sensor) => (
+      {sensoresVisiveis && sensores.map((sensor) => (
         <MarcadorSensor key={`sensor-${sensor.id}`} sensor={sensor} />
       ))}
     </MapContainer>
+
+    </div>
   )
 }
