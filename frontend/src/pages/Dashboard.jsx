@@ -19,6 +19,7 @@ import { useEffect, useRef, useState } from 'react'
 import { LegendaNiveis } from '../components/LegendaNiveis'
 import { MapaRecife } from '../components/MapaRecife'
 import { BairrosCriticos } from '../components/dashboard/BairrosCriticos'
+import { GatilhosAtivos } from '../components/dashboard/GatilhosAtivos'
 import { KpiCard } from '../components/dashboard/KpiCard'
 import { TabelaRelatos } from '../components/dashboard/TabelaRelatos'
 import { dashboard as dashboardService } from '../lib/dashboard'
@@ -52,6 +53,7 @@ function tempoRelativo(iso) {
 export function Dashboard() {
   const [resumo, setResumo] = useState(null)
   const [relatos, setRelatos] = useState([])
+  const [gatilhos, setGatilhos] = useState([])
   const [carregandoInicial, setCarregandoInicial] = useState(true)
   const [erroPolling, setErroPolling] = useState(false)
   const canceladoRef = useRef(false)
@@ -71,13 +73,15 @@ export function Dashboard() {
 
     const buscar = async () => {
       try {
-        const [novoResumo, lista] = await Promise.all([
+        const [novoResumo, lista, novosGatilhos] = await Promise.all([
           dashboardService.resumo(),
           relatosService.listarTodos(params),
+          dashboardService.alertasBairros(),
         ])
         if (canceladoRef.current) return
         setResumo(novoResumo)
         setRelatos(lista)
+        setGatilhos(novosGatilhos)
         setErroPolling(false)
       } catch {
         if (canceladoRef.current) return
@@ -95,6 +99,11 @@ export function Dashboard() {
       clearInterval(id)
     }
   }, [filtroBairro, filtroNivel])
+
+  const handleResolver = async (alertaId) => {
+    await dashboardService.resolverAlerta(alertaId)
+    setGatilhos((prev) => prev.filter((a) => a.id !== alertaId))
+  }
 
   // DEMO-MODE — quando ativo, mistura relatos fictícios e recalcula o resumo
   // localmente pra manter mapa/tabela/KPIs/bairros críticos consistentes
@@ -155,6 +164,9 @@ export function Dashboard() {
           cor="red"
         />
       </section>
+
+      {/* Gatilhos automáticos — US07 */}
+      <GatilhosAtivos alertas={gatilhos} onResolver={handleResolver} />
 
       {/* Barra de filtros — US08 */}
       <section

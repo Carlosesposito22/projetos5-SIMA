@@ -44,15 +44,22 @@ User   = get_user_model()
 # Valores padrão — podem ser sobrescritos em settings.py via SIMA_ALERTAS = {...}
 
 _DEFAULTS = {
-    'RAIO_BAIXO_M': 300,
-    'RAIO_MEDIO_M': 600,
-    'RAIO_ALTO_M':  1200,
-    'EMAIL_FROM':   'alertas@sima.recife.br',
-    'WA_ENABLED':   True,
+    'RAIO_BAIXO_M':   300,
+    'RAIO_MEDIO_M':   600,
+    'RAIO_ALTO_M':    1200,
+    'EMAIL_FROM':     'alertas@sima.recife.br',
+    'WA_ENABLED':     True,
+    'THRESHOLD_ALTO':  2,
+    'THRESHOLD_MEDIO': 3,
+    'JANELA_MIN':      60,
+    'COOLDOWN_MIN':    30,
 }
 
 def cfg(key):
-    return getattr(settings, 'SIMA_ALERTAS', {}).get(key, _DEFAULTS[key])
+    sima = getattr(settings, 'SIMA_ALERTAS', {})
+    if key in sima:
+        return sima[key]
+    return _DEFAULTS[key]
 
 # ── Haversine ──────────────────────────────────────────────────────────────
 
@@ -231,6 +238,81 @@ def _enviar_whatsapp(usuario, relato) -> ResultadoEnvio:
         return ResultadoEnvio(sucesso=True, detalhe=str(resultado_api))
     except Exception as exc:
         return ResultadoEnvio(sucesso=False, detalhe=str(exc))
+
+# ── Threshold por bairro (US07) ───────────────────────────────────────────
+
+def verificar_threshold_bairro(relato) -> bool:
+    """
+    Verifica se o bairro do relato cruzou o threshold crítico e, se sim,
+    cria um AlertaBairro.
+
+    Lógica:
+      - Conta relatos "alto" e "medio"+"alto" no bairro dentro de JANELA_MIN.
+      - Se total_alto >= THRESHOLD_ALTO  → nivel Crítico.
+      - Se total_medio_alto >= THRESHOLD_MEDIO → nivel Alerta.
+      - Não dispara se já existe um AlertaBairro ATIVO criado nos últimos
+        COOLDOWN_MIN minutos para o mesmo bairro (evita flood de alertas).
+
+    Retorna True se um novo AlertaBairro foi criado.
+    """
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.relatos.models import Relato as R
+
+    from .models import AlertaBairro
+
+    if not relato.bairro_id:
+        return False
+
+    janela_min   = cfg('JANELA_MIN')
+    cooldown_min = cfg('COOLDOWN_MIN')
+    thr_alto     = cfg('THRESHOLD_ALTO')
+    thr_medio    = cfg('THRESHOLD_MEDIO')
+
+    agora    = timezone.now()
+    desde    = agora - timedelta(minutes=janela_min)
+    cooldown = agora - timedelta(minutes=cooldown_min)
+
+    qs = R.objects.filter(bairro_id=relato.bairro_id, created_at__gte=desde)
+    total_alto       = qs.filter(nivel='alto').count()
+    total_medio_alto = qs.filter(nivel__in=['medio', 'alto']).count()
+    total            = qs.count()
+
+    if total_alto >= thr_alto:
+        nivel = AlertaBairro.Nivel.CRITICO
+    elif total_medio_alto >= thr_medio:
+        nivel = AlertaBairro.Nivel.ALERTA
+    else:
+        return False
+
+    ja_ativo = AlertaBairro.objects.filter(
+        bairro_id=relato.bairro_id,
+        status=AlertaBairro.Status.ATIVO,
+        criado_em__gte=cooldown,
+    ).exists()
+
+    if ja_ativo:
+        logger.info(
+            'Threshold cruzado em bairro %s mas alerta já ativo (cooldown). Ignorando.',
+            relato.bairro_id,
+        )
+        return False
+
+    AlertaBairro.objects.create(
+        bairro_id=relato.bairro_id,
+        nivel=nivel,
+        total_relatos=total,
+    )
+    logger.info(
+        'AlertaBairro criado: bairro_id=%s nivel=%s total_relatos=%s',
+        relato.bairro_id,
+        nivel,
+        total,
+    )
+    return True
+
 
 # ── Ponto de entrada público ───────────────────────────────────────────────
 

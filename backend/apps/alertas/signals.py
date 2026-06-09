@@ -17,11 +17,12 @@ def _despachar(relato_pk: int):
     """Roda em thread separada para não bloquear a resposta HTTP."""
     print(f'[SIGNAL] _despachar iniciado para relato #{relato_pk}', flush=True)
     try:
-        from apps.alertas.services import relato_criado
+        from apps.alertas.services import relato_criado, verificar_threshold_bairro
         from apps.relatos.models import Relato as R
 
         relato = R.objects.select_related('user', 'bairro').get(pk=relato_pk)
         relato_criado(relato)
+        verificar_threshold_bairro(relato)  # US07 — gatilho automático por bairro
     except Exception as e:
         print(f'[SIGNAL] ERRO ao despachar relato #{relato_pk}: {e}', flush=True)
         logger.exception('Falha ao despachar alertas para relato #%s', relato_pk)

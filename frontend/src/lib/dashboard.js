@@ -9,5 +9,7 @@
 import { api } from './api'
 
 export const dashboard = {
-  resumo: () => api.get('/api/dashboard/resumo/').then((r) => r.data),
+  resumo:        () => api.get('/api/dashboard/resumo/').then((r) => r.data),
+  alertasBairros: () => api.get('/api/alertas/bairros/').then((r) => r.data),
+  resolverAlerta: (id) => api.post(`/api/alertas/bairros/${id}/resolver/`).then((r) => r.data),
 }

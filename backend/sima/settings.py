@@ -42,12 +42,17 @@ META_WA_APP_SECRET    = env('META_WA_APP_SECRET',    default='')
 SIMA_APP_URL = env('SIMA_APP_URL', default='http://localhost:5173')
 
 SIMA_ALERTAS = {
+    # Raios de notificação por nível (US02/US05)
     'RAIO_BAIXO_M': 300,
     'RAIO_MEDIO_M': 600,
     'RAIO_ALTO_M':  1200,
     'EMAIL_FROM':   'alertas@sima.recife.br',
-    # Ativa WhatsApp automaticamente se o provedor e credenciais estiverem no .env
     'WA_ENABLED': bool(SIMA_WA_PROVIDER and (TWILIO_ACCOUNT_SID or META_WA_TOKEN)),
+    # Threshold automático por bairro (US07)
+    'THRESHOLD_ALTO':  2,   # relatos "alto" na janela → Crítico
+    'THRESHOLD_MEDIO': 3,   # relatos "medio"+"alto" na janela → Alerta
+    'JANELA_MIN':      60,  # janela de avaliação em minutos
+    'COOLDOWN_MIN':    30,  # não re-dispara pro mesmo bairro dentro desse período
 }
 
 # ── Apps ──────────────────────────────────────────────────────────────────
