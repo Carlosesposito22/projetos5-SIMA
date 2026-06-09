@@ -2,7 +2,7 @@
 
 > Para o contexto do produto (problema, persona, pesquisa, decisões de escopo), ver [`PROJETO.md`](PROJETO.md).
 >
-> **Estado atual:** projeto rodando ponta-a-ponta via `docker compose up`. Fluxo Cidadão (login → mapa → reportar) e Defesa Civil (login → painel com KPIs / mapa / bairros críticos / tabela / gráficos) implementados. Pendentes: filtros (US08), gatilho automático (US07), WhatsApp (US02/US05), sensores IoT (US09), notebooks da trilha de dados.
+> **Estado atual:** projeto rodando ponta-a-ponta via `docker compose up`. **Todas as 10 histórias do usuário do MVP estão implementadas.** Pendente apenas a trilha de análise de dados (notebooks, Streamlit, integração meteo).
 
 ---
 
@@ -23,7 +23,7 @@
 | **Análise de dados** | pandas + matplotlib + scikit-learn | Configurados em [`ml/requirements-ml.txt`](ml/requirements-ml.txt). Notebooks ainda não escritos. |
 | **Dashboard analítico** | Streamlit | Pasta [`ml/streamlit_app/`](ml/streamlit_app/) existe mas vazia. Trilha de dados ainda não começou. |
 | **Comunicação tempo real** | Polling HTTP (30s) | **NÃO** usar WebSockets no MVP — questionário mostrou conectividade instável durante chuvas. |
-| **Canal de alerta** | WhatsApp Cloud API (Meta) | Vars de ambiente já reservadas no `.env.example`; cliente Python ainda não codado (US02/US05). |
+| **Canal de alerta** | WhatsApp (Twilio ou Meta) | `apps/alertas/whatsapp.py` suporta ambos os provedores. Signal `post_save` do Relato dispara envio em thread separada. Webhook de recebimento implementado. |
 | **APIs meteorológicas** | OpenWeather + Tomorrow.io + (APAC) | Chaves reservadas no `.env.example`; integração ainda não codada. |
 | **Orquestração local** | **Docker Compose** | 3 serviços (postgres + backend + frontend) com healthcheck e hot-reload nos dois lados. |
 | **Deploy** | *A definir* | Decisão adiada — alinhar mais pra frente conforme o produto for tomando forma. |
@@ -58,17 +58,12 @@
 
 **Fluxo atual ponta-a-ponta:**
 
-1. **Cidadão** abre `/`, autentica (`POST /api/users/login/`), cai no mapa de Recife (Leaflet) com relatos das últimas 6h carregados via `GET /api/relatos/?ultimas_horas=6`. Polling de 30s.
-2. **Cidadão** clica em "Reportar", envia `POST /api/relatos/` com `lat`, `lng`, `bairro_id`, `nivel`, `descricao` e (opcional) `imagem` multipart.
-3. **Defesa Civil** autentica (ou usa sessão prévia) e é redirecionada pra `/dashboard`, que faz dois fetches em paralelo: `GET /api/dashboard/resumo/` (agregações) e `GET /api/relatos/?ultimas_horas=24` (mapa + tabela). Polling de 30s.
-4. **Defesa Civil** alterna entre as abas "Visão geral" e "Gráficos" — esta segunda calcula séries horárias / distribuição / top bairros no client a partir da mesma lista de relatos.
-
-**O que ainda não existe no fluxo (próximas USs):**
-
-- Gatilho automático que cria entidade `Alerta` quando threshold é cruzado (US07).
-- Cliente WhatsApp Cloud API enviando alertas pros moradores cadastrados naquele raio (US02/US05).
-- Job periódico (Django command + cron) consultando APIs meteorológicas.
-- Modelo `sklearn` treinado pra prever tendência de risco.
+1. **Cidadão** abre `/`, autentica (`POST /api/users/login/`), cai no mapa de Recife (Leaflet) com relatos das últimas 6h carregados via `GET /api/relatos/?ultimas_horas=6`. Polling de 30s. Sensores ativos aparecem com marcadores diferenciados.
+2. **Cidadão** clica em "Reportar", envia `POST /api/relatos/` com `lat`, `lng`, `bairro_id`, `nivel`, `descricao`, `endereco` e (opcional) `imagem` multipart.
+3. **Signal `post_save`** do Relato (em thread separada) chama `services.relato_criado()` → geofencing Haversine → envia email + WhatsApp pra usuários no raio. Em seguida, `services.verificar_threshold_bairro()` → cria `AlertaBairro` se threshold cruzado.
+4. **Defesa Civil** autentica e vai pra `/dashboard` com: 4 KPIs, banner de gatilhos automáticos ativos (US07), mapa + barra de filtros bairro/nível (US08), "Bairros críticos", tabela. Polling de 30s.
+5. **Defesa Civil** pode marcar gatilhos como resolvidos (`POST /api/alertas/bairros/<id>/resolver/`) e filtrar por bairro/nível no mapa e tabela.
+6. **Admin** acessa `/dashboard/sensores` para CRUD de sensores IoT e `/dashboard/usuarios` para gestão de usuários.
 
 ---
 
@@ -92,30 +87,40 @@ projetos5-SIMA/
 │       │   ├── Register.jsx        # cadastro público (cria role=cidadao)
 │       │   ├── Mapa.jsx            # US01 — mapa do cidadão
 │       │   ├── Reportar.jsx        # US04 — form de relato (com foto)
-│       │   ├── Alertas.jsx         # placeholder (US02)
-│       │   ├── Dashboard.jsx       # US06 — visão geral
-│       │   └── DashboardGraficos.jsx  # US06 — aba gráficos
+│       │   ├── Alertas.jsx         # US02/US04 — meus relatos (editar/deletar)
+│       │   ├── Perfil.jsx          # edição de perfil do usuário
+│       │   ├── Dashboard.jsx       # US06/US07/US08 — visão geral + filtros + gatilhos
+│       │   ├── DashboardGraficos.jsx  # US06 — aba gráficos
+│       │   ├── SensoresAdmin.jsx   # US09 — CRUD de sensores (role=admin)
+│       │   └── UsuariosAdmin.jsx   # gestão de usuários (role=admin)
 │       ├── components/
 │       │   ├── ProtectedRoute.jsx  # ProtectedRoute + PublicOnly + RoleProtectedRoute
 │       │   ├── MenuPerfil.jsx      # dropdown de perfil + sair
-│       │   ├── MapaRecife.jsx      # Leaflet + áreas pintadas + marcadores
+│       │   ├── MapaRecife.jsx      # Leaflet + áreas pintadas + marcadores relatos + sensores
 │       │   ├── AreaRisco.jsx       # círculo geográfico colorido por nível
 │       │   ├── MarcadorRelato.jsx
+│       │   ├── MarcadorSensor.jsx  # US09 — ícone diferenciado por tipo de sensor
 │       │   ├── LegendaNiveis.jsx
 │       │   ├── NivelSelector.jsx
 │       │   ├── BairroSelect.jsx
 │       │   ├── BuscaCEP.jsx
+│       │   ├── TelefoneInput.jsx   # input com máscara E.164 pra WhatsApp
+│       │   ├── BotaoDenuncia.jsx   # denunciar relato como falso
+│       │   ├── BotaoConfirmacao.jsx # confirmar que relato é verdadeiro
 │       │   └── dashboard/
 │       │       ├── DashboardLayout.jsx  # header + tabs + Outlet
 │       │       ├── KpiCard.jsx
 │       │       ├── BairrosCriticos.jsx
+│       │       ├── GatilhosAtivos.jsx   # US07 — banner de AlertaBairro ativos
 │       │       └── TabelaRelatos.jsx    # com coluna Foto + lightbox
 │       ├── contexts/
 │       │   └── AuthContext.jsx     # user + login/register/logout
 │       └── lib/
 │           ├── api.js              # axios instance + interceptors JWT
-│           ├── relatos.js          # service de relatos
-│           ├── dashboard.js        # service do painel
+│           ├── relatos.js          # service de relatos (+ ?meus=true, ?nivel=, ?bairro=)
+│           ├── dashboard.js        # service do painel (resumo + gatilhos)
+│           ├── sensores.js         # service de sensores (US09)
+│           ├── usuarios.js         # service de usuários (admin)
 │           ├── seriesHorarias.js   # agregações pros gráficos
 │           ├── bairros.js
 │           ├── bairrosGeo.js       # GeoJSON dos bairros
@@ -127,20 +132,22 @@ projetos5-SIMA/
 │   ├── manage.py
 │   ├── requirements.txt
 │   ├── sima/                       # projeto Django
-│   │   ├── settings.py             # AUTH_USER_MODEL, SIMPLE_JWT, DRF, CORS
-│   │   ├── urls.py                 # /api/users/ /api/relatos/ /api/dashboard/ etc.
+│   │   ├── settings.py             # AUTH_USER_MODEL, SIMPLE_JWT, DRF, CORS, SIMA_ALERTAS
+│   │   ├── urls.py                 # /api/users/ /api/relatos/ /api/alertas/ /api/sensores/ etc.
 │   │   └── wsgi.py
 │   ├── apps/
-│   │   ├── users/                  # ✅ US10 — login JWT, role, permissions
-│   │   ├── relatos/                # ✅ US04 — CRUD com imagem
+│   │   ├── users/                  # ✅ US10 — login JWT, role, permissions, CRUD usuários
+│   │   ├── relatos/                # ✅ US04 — CRUD com imagem, Denuncia, Confirmacao
 │   │   ├── areas_risco/            # ✅ Bairro + seed migration
 │   │   ├── dashboard/              # ✅ US06 — endpoint agregado
-│   │   ├── alertas/                # ⏳ vazio — reservado pra US07
-│   │   └── clima/                  # ⏳ vazio — reservado pra integração meteo
-│   ├── services/
-│   │   ├── whatsapp_cloud.py       # ⏳ stub
-│   │   ├── ml_predict.py           # ⏳ stub
-│   │   └── trigger_alerta.py       # ⏳ stub
+│   │   ├── alertas/                # ✅ US02/US05/US07 — Alerta + AlertaBairro + signal + WA
+│   │   │   ├── models.py           # Alerta (por usuário) + AlertaBairro (threshold bairro)
+│   │   │   ├── services.py         # relato_criado() + verificar_threshold_bairro()
+│   │   │   ├── signals.py          # post_save(Relato) → despacha em thread separada
+│   │   │   ├── whatsapp.py         # adaptador Twilio + Meta + webhook view
+│   │   │   └── views.py            # AlertaBairroListView + AlertaBairroResolverView
+│   │   ├── sensores/               # ✅ US09 — Sensor IoT CRUD
+│   │   └── clima/                  # ⏳ reservado pra integração meteorológica
 │   └── tests/
 │
 └── ml/                             # ⏳ trilha de Análise/Visualização de Dados
@@ -157,8 +164,6 @@ projetos5-SIMA/
 
 ## 4. Modelo de Dados (Estado Atual)
 
-Apenas três tabelas modeladas até agora: `users`, `bairros`, `relatos`. As demais ficam pra próximas USs.
-
 ```sql
 -- ✅ users (apps.users.User — AbstractBaseUser + PermissionsMixin)
 users (
@@ -166,9 +171,9 @@ users (
   nome,
   email UNIQUE,            -- USERNAME_FIELD
   password,                -- hash do Django
-  telefone,                -- pra WhatsApp (US02/US05)
+  telefone,                -- E.164 normalizado (pra WhatsApp — US02/US05)
   bairro_id FK → bairros,  -- bairro principal de monitoramento
-  lat, lng,                -- coordenadas opcionais
+  lat, lng,                -- coordenadas opcionais (geofencing US02)
   role,                    -- 'cidadao' | 'defesa_civil' | 'admin'
   is_active, is_staff, is_superuser,
   date_joined
@@ -189,19 +194,59 @@ relatos (
   lat, lng,                -- DecimalField(9,6)
   bairro_id FK → bairros (SET_NULL),
   nivel,                   -- 'baixo' | 'medio' | 'alto'
+  endereco VARCHAR(512),   -- endereço reverso (geocoder)
   descricao TEXT(500),
   imagem,                  -- ImageField, upload_to='relatos/'
   created_at
 )
 -- índices: bairro_id, -created_at
 
--- ⏳ sensores (US09 — apps.sensores ainda não criado)
--- ⏳ alertas (US07 — apps.alertas existe vazio)
--- ⏳ areas_risco (polígonos + threshold — fora do MVP atual)
--- ⏳ clima_historico (cache de APIs meteorológicas — US07)
+-- ✅ denuncias / confirmacoes (apps.relatos — crowdsourcing de veracidade)
+denuncias    (id PK, relato_id FK, user_id FK, created_at) -- unique(relato, user)
+confirmacoes (id PK, relato_id FK, user_id FK, created_at) -- unique(relato, user)
+
+-- ✅ alertas (apps.alertas.Alerta — US02/US05 — 1 registro por relato×usuário×canal)
+alertas (
+  id PK,
+  relato_id FK → relatos (CASCADE),
+  usuario_id FK → users (CASCADE),
+  canal,    -- 'email' | 'whatsapp' | 'push'
+  status,   -- 'pendente' | 'enviado' | 'falhou'
+  detalhe,  -- erro ou ID externo do envio
+  created_at
+)
+-- unique_together: (relato, usuario, canal)
+
+-- ✅ alertas_bairro (apps.alertas.AlertaBairro — US07 — gatilho por threshold)
+alertas_bairro (
+  id PK,
+  bairro_id FK → bairros (CASCADE),
+  nivel,         -- 'atencao' | 'alerta' | 'critico'
+  status,        -- 'ativo' | 'resolvido'
+  total_relatos, -- relatos na janela que dispararam
+  criado_em,
+  resolvido_em,
+  resolvido_por FK → users (SET_NULL)
+)
+
+-- ✅ sensores (apps.sensores.Sensor — US09)
+sensores (
+  id PK,
+  nome VARCHAR(120),
+  tipo,           -- 'pluviometro' | 'regua_nivel' | 'camera' | 'iot_generico'
+  descricao TEXT(500),
+  lat, lng,       -- DecimalField(9,6)
+  bairro_id FK → bairros (SET_NULL),
+  ativo BOOL,
+  ultimo_dado_em, -- última leitura recebida
+  created_at
+)
+
+-- ⏳ areas_risco (polígonos + threshold por área — fora do MVP)
+-- ⏳ clima_historico (cache de APIs meteorológicas — pendente)
 ```
 
-`User.bairro` virou FK pra `Bairro` (não é mais string livre como no schema original), o que casa com `Relato.bairro` e permite agregação consistente no painel.
+`User.bairro` é FK pra `Bairro` (não string livre), o que permite geofencing por bairro quando `lat/lng` do usuário não está preenchido.
 
 ---
 
@@ -216,13 +261,24 @@ Todas as rotas vivem sob `/api/`:
 | POST | `/api/users/refresh/` | refresh | Renova access (rotação + blacklist do refresh anterior). |
 | POST | `/api/users/logout/` | bearer | Blacklist do refresh token. |
 | GET / PATCH | `/api/users/me/` | bearer | Perfil do usuário. `role` é read-only — promoção via Django admin. |
-| GET / POST | `/api/relatos/` | listagem livre p/ logados; POST exige bearer | Lista (com paginação) e cria relatos. Aceita `?ultimas_horas=N`, `?bairro=<slug>`. |
+| GET | `/api/users/` | bearer + admin | Lista todos os usuários (gestão). |
+| GET / PATCH / DELETE | `/api/users/<id>/` | bearer + admin | Detalhe / editar / remover usuário. |
+| GET / POST | `/api/relatos/` | bearer | Lista e cria relatos. Aceita `?ultimas_horas=N`, `?bairro=<id ou slug>`, `?nivel=`, `?meus=true`. |
 | GET / PATCH / DELETE | `/api/relatos/<id>/` | bearer + dono | Detalhe / editar / apagar relato. |
+| POST | `/api/relatos/<id>/denunciar/` | bearer | Denuncia relato como falso (idempotente). |
+| DELETE | `/api/relatos/<id>/denunciar/` | bearer | Retira denúncia. |
+| POST | `/api/relatos/<id>/confirmar/` | bearer | Confirma relato como verdadeiro (idempotente). |
+| DELETE | `/api/relatos/<id>/confirmar/` | bearer | Retira confirmação. |
 | GET | `/api/bairros/` | livre | Lista de bairros (pro `BairroSelect`). |
-| GET | `/api/dashboard/resumo/` | bearer + role ∈ `{defesa_civil, admin}` | KPIs (hoje/7d/30d), `por_nivel`, top `por_bairro`, `ultimo_relato_em`. |
+| GET | `/api/dashboard/resumo/` | bearer + DC/admin | KPIs (hoje/7d/30d), `por_nivel`, top `por_bairro`, `ultimo_relato_em`. |
+| GET | `/api/alertas/bairros/` | bearer + DC/admin | Gatilhos automáticos ativos por bairro (US07). |
+| POST | `/api/alertas/bairros/<id>/resolver/` | bearer + DC/admin | Marca AlertaBairro como resolvido (US07). |
+| GET / POST | `/api/alertas/whatsapp/webhook/` | público | Verificação Meta (GET) e recebimento de mensagens WA (POST). |
+| GET / POST | `/api/sensores/` | bearer (leitura); admin (escrita) | Lista e cadastra sensores IoT (US09). Aceita `?ativo=true/false`. |
+| GET / PATCH / DELETE | `/api/sensores/<id>/` | bearer (leitura); admin (escrita) | Detalhe / editar / remover sensor. |
 | (admin) | `/admin/` | Django admin | Promover usuários, ver dados crus. |
 
-**Permission custom:** `apps.users.permissions.IsDefesaCivilOrAdmin` (libera operador, admin role e superuser).
+**Permissions custom:** `apps.users.permissions.IsDefesaCivilOrAdmin` (libera operador, admin role e superuser). `SoAdminEscrita` em sensores (leitura para qualquer autenticado, escrita somente admin).
 
 ---
 
@@ -253,38 +309,37 @@ A trilha do 5º CC exige entregáveis específicos que devem viver em `ml/`. **N
 
 ## 8. Status (atualizado conforme USs entram)
 
-### 8.1. ✅ Entregue
+### 8.1. ✅ Entregue — todas as 10 USs do MVP
 
 - [x] Docker Compose com postgres + backend (Django auto-migrate) + frontend (Vite dev), hot-reload nos dois lados
-- [x] `.env.example` na raiz com vars de DB / Vite / OpenWeather / Tomorrow / WhatsApp / Django
-- [x] **US10** — User customizado (email), JWT (access + refresh + rotação + blacklist), endpoints register/login/refresh/logout/me, admin customizado, tabs Cidadão/Defesa Civil no front, `RoleProtectedRoute`, seed automático de conta `defesa@sima.local/defesa123` via data migration (credenciais exibidas na própria tela de login)
+- [x] `.env.example` na raiz com vars de DB / Vite / OpenWeather / Tomorrow / WhatsApp / Twilio / Django
+- [x] **US10** — User customizado (email), JWT (access + refresh + rotação + blacklist), endpoints register/login/refresh/logout/me, admin customizado, tabs Cidadão/Defesa Civil no front, `RoleProtectedRoute`, seed automático de contas `defesa@sima.local/defesa123` e `admin@sima.local/admin123` via data migration. Edição de perfil em `/perfil`. Gestão de usuários em `/dashboard/usuarios` (admin).
 - [x] **Bairros** — model + seed migration com bairros oficiais de Recife (`apps.areas_risco`)
-- [x] **US04** — model `Relato` com FK pra Bairro, `nivel`, `descricao`, `imagem` (ImageField + Pillow); ViewSet DRF com CRUD; form React + Leaflet pra escolher ponto; suporte a edição/exclusão (PR #1)
-- [x] **US01** — mapa do cidadão com Leaflet + contornos GeoJSON de bairros + áreas de risco pintadas (círculos geográficos coloridos) + marcadores clicáveis; polling 30s
-- [x] **US03** — vocabulário Atenção/Alerta/Crítico em toda UI (rótulos centralizados em `lib/relatos.js`); áreas pintadas no mapa em verde/âmbar/vermelho com raio crescente por severidade (60/90/130m); marcadores e badges combinando; legenda fixa explica os 3 níveis com descrição
-- [x] **US06** — endpoint `/api/dashboard/resumo/`, permission `IsDefesaCivilOrAdmin`, painel React com 4 KPIs, mapa, "Bairros críticos", tabela com coluna Foto + lightbox, aba "Gráficos" com Recharts (barras empilhadas, pizza, top bairros), polling 30s, redirect automático de operador pra `/dashboard`
+- [x] **US04** — model `Relato` com FK pra Bairro, `nivel`, `endereco`, `descricao`, `imagem` (ImageField + Pillow); ViewSet DRF com CRUD; form React + Leaflet pra escolher ponto; suporte a edição/exclusão. Models `Denuncia` e `Confirmacao` para crowdsourcing de veracidade.
+- [x] **US01** — mapa do cidadão com Leaflet + contornos GeoJSON de bairros + áreas de risco pintadas (círculos geográficos coloridos) + marcadores clicáveis + `MarcadorSensor` para sensores IoT ativos; polling 30s
+- [x] **US03** — vocabulário Atenção/Alerta/Crítico em toda UI; áreas pintadas em verde/âmbar/vermelho com raio crescente (60/90/130m); legenda fixa
+- [x] **US06** — endpoint `/api/dashboard/resumo/`, painel React com 4 KPIs, mapa com filtros, "Bairros críticos", tabela Foto + lightbox, aba "Gráficos" com Recharts (barras empilhadas, pizza, top bairros), polling 30s
+- [x] **US08** — `?bairro=<id|slug>&nivel=<n>` no `RelatoViewSet`; dropdowns de filtro no painel (bairro + nível) com reload automático
+- [x] **US07** — model `AlertaBairro`, `services.verificar_threshold_bairro()` (configurable via `SIMA_ALERTAS`), signal `post_save(Relato)` dispara em thread, endpoint `GET /api/alertas/bairros/` e `POST .../resolver/`, componente `GatilhosAtivos` no painel
+- [x] **US02** — `services.relato_criado()`: geofencing Haversine, seleção de usuários no raio ou mesmo bairro, disparo de email (Django `send_mail`) + WhatsApp; model `Alerta` persiste histórico com status (enviado/falhou)
+- [x] **US05** — `apps/alertas/whatsapp.py`: suporta Twilio (Content Template + session message) e Meta Cloud API; webhook GET/POST para verificação e recebimento de mensagens WA
+- [x] **US09** — model `Sensor` com tipo/lat/lng/bairro/ativo; CRUD via DRF (`/api/sensores/`); página `SensoresAdmin` em `/dashboard/sensores` (role=admin); `MarcadorSensor` no mapa
 
-### 8.2. 🔜 Próxima fila
-
-- [ ] **US08** — `?bairro=<slug>&nivel=<n>` no `RelatoViewSet` + dropdowns de filtro no painel (provavelmente <1 dia)
-- [ ] **US07** — model `Alerta`, lógica de threshold por bairro, job periódico (Django management command) que cria alertas quando o conjunto de relatos cruza o limite
-- [ ] **US02/US05** — cliente `whatsapp_cloud.py` real, envio de alertas pra moradores no raio, possivelmente login via WhatsApp OTP
-- [ ] **US09** — app `sensores` + CRUD admin + marcadores diferenciados no mapa
-
-### 8.3. ⏳ Trilha de dados (depois das USs)
+### 8.2. ⏳ Trilha de dados (pendente)
 
 - [ ] Notebook `01_eda.ipynb` rodando contra o Postgres
 - [ ] Modelo de regressão treinado + serializado (joblib)
-- [ ] Modelo classificador (risco binário) + métricas
+- [ ] Modelo classificador (risco binário) + métricas (matriz de confusão, curva ROC)
 - [ ] Streamlit dashboard apontando pro mesmo banco
-- [ ] Integração OpenWeather coletando precipitação
+- [ ] Integração OpenWeather coletando precipitação (app `clima` reservado)
 
-### 8.4. Outras pendências técnicas
+### 8.3. Outras pendências técnicas
 
 - [ ] Ordenação alfabética da seed de bairros desalinhada com o teste `test_ordenacao_alfabetica` em `apps.areas_risco.tests` (1 falha pré-existente)
 - [ ] Setup de linters (black/ruff + ESLint/Prettier)
 - [ ] Definir alvo de deploy (cloud provider, CI/CD)
 - [ ] Limpar marcadores `DEMO-MODE` (ver [`lib/demoMode.jsx`](frontend/src/lib/demoMode.jsx)) antes de qualquer demo "séria"
+- [ ] Implementar opt-out de WhatsApp: webhook já recebe "PARAR" mas a flag no `User` ainda não é persistida
 
 ---
 

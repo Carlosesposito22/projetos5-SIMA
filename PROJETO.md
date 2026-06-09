@@ -127,21 +127,21 @@ O backlog do MVP é composto por **exatamente 10 histórias do usuário**, distr
 ### 👤 Cidadão / Usuário Final
 
 - ✅ **US01 — Ver alertas no mapa:** como cidadão de Recife, quero visualizar em um mapa interativo os pontos de alagamento em tempo real, para que eu possa planejar minha rota antes de sair de casa.
-- ⏳ **US02 — Receber notificação de alerta:** como morador de uma área de risco, quero receber uma notificação imediata quando um alagamento for detectado no meu bairro, para que eu possa tomar uma ação preventiva com antecedência.
+- ✅ **US02 — Receber notificação de alerta:** como morador de uma área de risco, quero receber uma notificação imediata quando um alagamento for detectado no meu bairro, para que eu possa tomar uma ação preventiva com antecedência.
 - ✅ **US03 — Ver nível de severidade:** como pedestre, quero saber o nível de criticidade de cada ponto (Atenção / Alerta / Crítico), para que eu consiga avaliar se é seguro passar por aquela via.
 - ✅ **US04 — Registrar um relato:** como usuário do aplicativo, quero reportar manualmente um alagamento que estou presenciando, para que outras pessoas sejam avisadas mais rapidamente.
-- ⏳ **US05 — Acessar pelo WhatsApp:** como cidadão que não tem o app instalado, quero receber alertas pelo WhatsApp, para que eu seja informado mesmo sem precisar baixar nada.
+- ✅ **US05 — Acessar pelo WhatsApp:** como cidadão que não tem o app instalado, quero receber alertas pelo WhatsApp, para que eu seja informado mesmo sem precisar baixar nada.
 
 ### 🚨 Agente da Defesa Civil / Gestor Urbano
 
 - ✅ **US06 — Monitorar todos os pontos no dashboard:** como operador da Defesa Civil, quero visualizar um painel com o status de todos os pontos monitorados de Recife, para que eu possa coordenar as equipes de campo com agilidade.
-- ⏳ **US07 — Receber gatilho automático de nível crítico:** como gestor de emergências, quero que o sistema dispare um alerta automático quando o nível da água atingir o threshold crítico, para que a resposta operacional seja iniciada sem depender de monitoramento manual constante.
-- 🔜 **US08 — Filtrar alertas por bairro:** como operador, quero filtrar os alertas por bairro ou região, para que eu consiga priorizar as áreas com maior concentração de ocorrências.
+- ✅ **US07 — Receber gatilho automático de nível crítico:** como gestor de emergências, quero que o sistema dispare um alerta automático quando o nível da água atingir o threshold crítico, para que a resposta operacional seja iniciada sem depender de monitoramento manual constante.
+- ✅ **US08 — Filtrar alertas por bairro:** como operador, quero filtrar os alertas por bairro ou região, para que eu consiga priorizar as áreas com maior concentração de ocorrências.
 
 ### 🔧 Administrador do Sistema
 
-- ⏳ **US09 — Cadastrar novo sensor IoT:** como administrador, quero registrar um novo sensor no sistema informando sua localização e tipo, para que ele comece a enviar dados e aparecer no mapa.
-- ✅ **US10 — Autenticar no sistema:** como administrador ou operador, quero fazer login com usuário e senha (ou via WhatsApp), para que o acesso ao painel seja seguro e controlado. *(Login WhatsApp ainda pendente — só email+senha por enquanto.)*
+- ✅ **US09 — Cadastrar novo sensor IoT:** como administrador, quero registrar um novo sensor no sistema informando sua localização e tipo, para que ele comece a enviar dados e aparecer no mapa.
+- ✅ **US10 — Autenticar no sistema:** como administrador ou operador, quero fazer login com usuário e senha, para que o acesso ao painel seja seguro e controlado. *(Login via WhatsApp OTP fora do escopo do MVP.)*
 
 > O arquivo histórico [`context/Backlog.md`](context/Backlog.md) contém o backlog bruto da fase de ideação (11 itens, sem agrupamento por persona) e fica preservado como artefato. O escopo vigente é o desta seção.
 
