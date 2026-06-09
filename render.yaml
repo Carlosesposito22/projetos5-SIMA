@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: sima-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
+    startCommand: python manage.py migrate --noinput && gunicorn sima.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.0"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      # Preencher no dashboard do Render após criar o serviço:
+      # DATABASE_URL        → connection string do Supabase
+      # ALLOWED_HOSTS       → sima-backend.onrender.com (ou seu domínio customizado)
+      # CORS_ALLOWED_ORIGINS → https://seu-projeto.vercel.app
+      # CSRF_TRUSTED_ORIGINS → https://sima-backend.onrender.com
+      # SIMA_APP_URL         → https://seu-projeto.vercel.app

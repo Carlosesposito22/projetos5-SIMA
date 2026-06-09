@@ -8,3 +8,5 @@ requests>=2.32
 joblib>=1.4
 Pillow>=10.0
 twilio
+gunicorn>=22.0
+whitenoise[brotli]>=6.7
