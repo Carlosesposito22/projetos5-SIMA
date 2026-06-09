@@ -3,6 +3,7 @@ services:
     name: sima-backend
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
     envVars:
       - key: DJANGO_SECRET_KEY
         generateValue: true
