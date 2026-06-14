@@ -15,6 +15,7 @@ import { BannerDemo } from '../../lib/demoMode'
 const ABAS_BASE = [
   { rota: '/dashboard', rotulo: 'Visão geral', end: true },
   { rota: '/dashboard/graficos', rotulo: 'Gráficos', end: false },
+  { rota: '/dashboard/painel-cop', rotulo: 'Painel COP', end: false }, // só aqui
 ]
 const ABAS_ADMIN = [
   { rota: '/dashboard/sensores', rotulo: 'Sensores IoT', end: false },
