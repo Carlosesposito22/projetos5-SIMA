@@ -1,7 +1,8 @@
-"""Rotas do app clima — integração OpenWeather/Tomorrow.io/APAC."""
-
 from django.urls import path
+from . import views
 
-app_name = 'clima'
+app_name = "clima"
 
-urlpatterns = []
+urlpatterns = [
+    path("atual/", views.ClimaAtualView.as_view(), name="atual"),
+]

@@ -12,11 +12,8 @@ import { DashboardGraficos } from './pages/DashboardGraficos'
 import { SensoresAdmin } from './pages/SensoresAdmin'
 import { UsuariosAdmin } from './pages/UsuariosAdmin'
 import { Perfil } from './pages/Perfil'
+import { PainelCOP } from './pages/PainelCop'
 
-/**
- * Operador (defesa_civil/admin) tem o painel como tela inicial — quem cai
- * na raiz é mandado direto pra /dashboard. Cidadão segue vendo o mapa.
- */
 function HomePorPerfil() {
   const { user } = useAuth()
   if (user?.role === 'defesa_civil' || user?.role === 'admin') {
@@ -30,46 +27,12 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route
-            path="/login"
-            element={
-              <PublicOnly>
-                <Login />
-              </PublicOnly>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicOnly>
-                <Register />
-              </PublicOnly>
-            }
-          />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <HomePorPerfil />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reportar"
-            element={
-              <ProtectedRoute>
-                <Reportar />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/alertas"
-            element={
-              <ProtectedRoute>
-                <Alertas />
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
+          <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
+          <Route path="/" element={<ProtectedRoute><HomePorPerfil /></ProtectedRoute>} />
+          <Route path="/reportar" element={<ProtectedRoute><Reportar /></ProtectedRoute>} />
+          <Route path="/alertas" element={<ProtectedRoute><Alertas /></ProtectedRoute>} />
+
           <Route
             element={
               <RoleProtectedRoute roles={['defesa_civil', 'admin']}>
@@ -79,31 +42,12 @@ function App() {
           >
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/dashboard/graficos" element={<DashboardGraficos />} />
-            <Route
-              path="/dashboard/sensores"
-              element={
-                <RoleProtectedRoute roles={['admin']}>
-                  <SensoresAdmin />
-                </RoleProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/usuarios"
-              element={
-                <RoleProtectedRoute roles={['admin']}>
-                  <UsuariosAdmin />
-                </RoleProtectedRoute>
-              }
-            />
+            <Route path="/dashboard/painel-cop" element={<PainelCOP />} />
+            <Route path="/dashboard/sensores" element={<RoleProtectedRoute roles={['admin']}><SensoresAdmin /></RoleProtectedRoute>} />
+            <Route path="/dashboard/usuarios" element={<RoleProtectedRoute roles={['admin']}><UsuariosAdmin /></RoleProtectedRoute>} />
           </Route>
-          <Route
-            path="/perfil"
-            element={
-              <ProtectedRoute>
-                <Perfil />
-              </ProtectedRoute>
-            }
-          />
+
+          <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
