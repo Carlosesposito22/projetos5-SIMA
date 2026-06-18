@@ -55,5 +55,21 @@ services:
     depends_on:
       - backend
 
+  streamlit:
+    build:
+      context: ./ml
+    container_name: sima-streamlit
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-sima}:${POSTGRES_PASSWORD:-sima}@postgres:5432/${POSTGRES_DB:-sima}
+    ports:
+      - "8501:8501"
+    volumes:
+      # Bind do código pra hot-reload em desenvolvimento.
+      - ./ml:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   sima_pgdata:

@@ -12,10 +12,13 @@ import { MenuPerfil } from '../MenuPerfil'
 // DEMO-MODE — remover antes de subir em produção (ver lib/demoMode.jsx)
 import { BannerDemo } from '../../lib/demoMode'
 
+const ANALYTICS_URL =
+  import.meta.env.VITE_ANALYTICS_URL || 'http://localhost:8501'
+
 const ABAS_BASE = [
   { rota: '/dashboard', rotulo: 'Visão geral', end: true },
   { rota: '/dashboard/graficos', rotulo: 'Gráficos', end: false },
-  { rota: '/dashboard/painel-cop', rotulo: 'Painel COP', end: false }, // só aqui
+  { rota: '/dashboard/painel-cop', rotulo: 'Painel COP', end: false },
 ]
 const ABAS_ADMIN = [
   { rota: '/dashboard/sensores', rotulo: 'Sensores IoT', end: false },
@@ -65,6 +68,18 @@ export function DashboardLayout() {
               {aba.rotulo}
             </NavLink>
           ))}
+
+          <a
+            href={ANALYTICS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300 transition flex items-center gap-1"
+          >
+            Analytics
+            <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
         </nav>
       </header>
 
