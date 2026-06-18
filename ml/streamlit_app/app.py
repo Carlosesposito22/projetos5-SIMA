@@ -63,6 +63,7 @@ Use o **menu lateral** para acessar cada seção da análise:
 | **Análise Temporal** | Padrão horário, por data e por bairro |
 | **Regressão** | Correlação entre variáveis e modelos de regressão linear |
 | **Modelos ML** | Classificadores (Árvore + Regressão Logística), métricas, ROC |
+| **Notebooks** | Links para os notebooks EDA, Regressão e Classificador no Google Colab |
 | **Sobre** | Documentação de decisões visuais, insights e limitações |
 
 ---

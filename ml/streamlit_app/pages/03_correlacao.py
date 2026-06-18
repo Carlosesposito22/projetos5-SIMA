@@ -18,10 +18,6 @@ st.set_page_config(page_title='Regressão · SIMA', layout='wide')
 # Dados
 # ──────────────────────────────────────────────────────────────────────────────
 st.title('Regressão Linear')
-st.caption(
-    'Avalia a relação entre variáveis do relato (hora do dia, latitude) '
-    'e o nível de severidade. Análise correspondente ao notebook CC4.'
-)
 
 try:
     df = get_relatos()
@@ -182,7 +178,3 @@ else:
     )
 
 st.markdown('---')
-st.caption(
-    'Análise correspondente ao notebook `ml/notebooks/CC4_Regressao_SIMA.ipynb`. '
-    'Para análise completa incluindo regressão múltipla e dados do questionário, consulte o notebook.'
-)

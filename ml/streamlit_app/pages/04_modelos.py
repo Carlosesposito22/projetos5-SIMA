@@ -26,10 +26,6 @@ CORES_ROC = ['#ef4444', '#10b981', '#f59e0b']
 # Dados e treinamento
 # ──────────────────────────────────────────────────────────────────────────────
 st.title('Modelos de Classificação')
-st.caption(
-    'Árvore de Decisão e Regressão Logística treinadas com Leave-One-Out Cross-Validation (LOOCV) '
-    'para classificar o nível de risco (baixo / médio / alto). Análise correspondente ao notebook CC5.'
-)
 
 try:
     df = get_relatos()
